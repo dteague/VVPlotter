@@ -23,7 +23,10 @@ def writeHTML(path, name):
             '</head>\n'
             '<body>\n'.format(title=name)
         )
-        index.write('  <div style="text-align: center;"><b>{title}</b></div>\n'
+        index.write('  <div style="text-align: center;"><b>{title}</b>\n'
+                    '<br/><a href="..">[back]</a>'
+                    '</div>\n'
+                    
                 '  <table>\n'.format(title=name)
         )
         if path.split("/")[-1] in ["eee", "eem", "emm", "mmm"]:

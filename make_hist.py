@@ -38,11 +38,12 @@ drawObj = {
            # "ttXY"      : "fill-cornflowerblue",
            # "ttw"       : "fill-darkgreen",
            # "xg"        : "fill-indigo",
-           # "ttt"       : "fill-hotpink",
-           "ttt_line"  : "nofill-cornflowerblue-thick",
            # "tth"       : "fill-slategray",
-           # "2017"      : "fill-green",
            # "2016"      : "fill-red",
+
+          # "ttt"       : "fill-hotpink",
+           # "2017"      : "fill-green",
+          "ttt_line"  : "nofill-cornflowerblue-thick",
            "tttt_line" : "nofill-hotpink",
            # "other"     : "fill-hotpink",
 }
@@ -77,18 +78,24 @@ signalName = args.signal
 channels = args.channels.split(',')
 
 basePath = '/eos/home-{0:1.1s}/{0}/www'.format(os.environ['USER'])
-basePath += '/%s/%s/%s' % ('PlottingResults', args.analysis, args.path)
+basePath += '/%s/%s/%s_%s' % ('PlottingResults', args.analysis, args.path, args.drawStyle)
 configHelper.checkOrCreateDir('%s' % (basePath))
 configHelper.checkOrCreateDir('%s/plots' % (basePath))
 configHelper.checkOrCreateDir('%s/logs' % (basePath))
-outFile = r.TFile("%s/plots/output.root"%basePath, "UPDATE")
+outFile = r.TFile("%s/output.root"%basePath, "UPDATE")
 
 for histName in info.getListOfHists():
     for chan in channels:
         groupHists = configHelper.getNormedHistos(inFile, info, histName, chan)
-        for hist in groupHists.values(): configHelper.addOverflow(hist)
         if not groupHists or groupHists.values()[0].InheritsFrom("TH2"):
             continue
+        for hist in groupHists.values():
+            try:
+                hist.Rebin(info.getPlotSpec(histName)["Rebin"])
+            except:
+                pass
+            configHelper.addOverflow(hist, info.getUpBinUser(histName))
+        ordHists = configHelper.getDrawOrder(groupHists, drawObj.keys(), info)
 
         # signal
         if signalName in groupHists:
@@ -96,11 +103,10 @@ for histName in info.getListOfHists():
             style.setStyle(signal, info.getStyleInit("Signal"))
             style.setAttributes(signal, info.getStyleInfo("Signal"))
             del groupHists[signalName]
+            del ordHists[[i[0] for i in ordHists].index(signalName)]
         else:
             signal = None
         
-        ordHists = configHelper.getDrawOrder(groupHists, drawObj.keys(), info)
-
         # stack
         stack = r.THStack("%s_%s" % (histName, chan), "")
         for group, hist in ordHists:
@@ -117,7 +123,7 @@ for histName in info.getListOfHists():
         statError = configHelper.getHistTotal(ordHists)
         style.setStyle(statError, info.getStyleInit("ErrorBars"))
 
-        maxHeight = configHelper.getMax(stack, signal, data)
+        maxHeight = configHelper.getMax(stack, signal, data)*1.2
         ####End Setup
         
         if args.drawStyle == 'compare':
@@ -126,10 +132,8 @@ for histName in info.getListOfHists():
         if args.drawStyle == 'stack':
             pass
 
-            
         canvas = MyCanvas(histName)
-        curPad = canvas.getAndDraw()
-        curPad.cd()
+        canvas.getAndDraw().cd()
         
         legend = MyLegend(ordHists, info, statError, signal, data)
         ratioPlot = MyRatio(args.drawStyle, stack, signal, data)
@@ -137,21 +141,24 @@ for histName in info.getListOfHists():
         
         if args.no_ratio or not ratioPlot.isValid():
             stack.Draw()
-            style.setAttributes(stack, info.getAxisInfo(histName))
+            # style.setAttributes(stack, info.getAxisInfo(histName))
             if signal: signal.Draw("same")
-            stack.GetHistogram().SetMaximum(maxHeight*1.3)
+            stack.GetHistogram().SetMaximum(maxHeight)
         else:
             rp = ratioPlot.getAndDraw()
-            curPad = rp.GetUpperPad()
-            curPad.cd()
-            rp.GetLowerRefYaxis().SetNdivisions(505)
+            rp.GetUpperPad().cd()
             ratioPlot.setMax(maxHeight)
-            
+
+        try:
+            style.setAttributes(stack.GetHistogram(), info.getPlotSpec(histName)["Attributes"])
+        except:
+            pass
+        
         if statError: statError.Draw("E2same")
         if data: data.Draw("same")
             
         legend.getAndDraw()
-        cmsText.getAndDraw(curPad, "Preliminary")
+        cmsText.getAndDraw(r.gPad, "Preliminary")
         canvas.writeOut(outFile)
         
         # setup log file
@@ -163,7 +170,7 @@ for histName in info.getListOfHists():
         logger.writeOut()
 
         canvas.saveAsPDF(basePath+"/plots")
-
-        
+    
+outFile.Close()
 writeHTML(basePath, args.analysis)
         

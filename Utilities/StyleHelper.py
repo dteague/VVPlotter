@@ -43,10 +43,12 @@ def setAttributes(obj, attributes, isStack=False):
     for func, val in attributes.iteritems():
         if isStack and "Get" in func:
             runModule(obj.GetHistogram(), func, val)
+        elif isinstance(val, tuple):
+            runModule(obj, func)(*val)
         else:
-            runModule(obj, func, val)
-
-def runModule(module, func, val):
+            runModule(obj, func)(val)
+            
+def runModule(module, func):
     funcList = func.split('.')
     tmp = getattr(module, funcList.pop(0).strip("()"))
     for extraFunc in funcList:
@@ -54,5 +56,6 @@ def runModule(module, func, val):
             tmp = getattr(tmp(), extraFunc.strip("()"))
         except:
             tmp = getattr(tmp, extraFunc.strip("()"))
-    tmp(val)
+    return tmp
+    
     

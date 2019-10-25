@@ -9,3 +9,5 @@ class MyObject:
 
     def setAttributes(self):
         pass
+
+            

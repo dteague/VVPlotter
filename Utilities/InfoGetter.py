@@ -22,6 +22,7 @@ class InfoGetter:
         self.listOfHists = self.setupListOfHists(inFile)
         self.sumweights = self.setupSumWeight(inFile)
         self.objectStyle = self.readAllInfo("style.py")
+        self.plotSpecs = self.readAllInfo("plotInfo.py")
         self.lumi = 35900 #default
         
         if os.path.isfile("%s/PlotObjects/%s/%s.json" % (adm_path, analysis, selection)):
@@ -148,6 +149,17 @@ class InfoGetter:
 
     def getGroups(self):
         return self.groupInfo.keys()
+
+    def getPlotSpec(self, histName):
+        return self.plotSpecs[histName]
+
+    def getUpBinUser(self, histName):
+        if histName in self.plotSpecs and \
+           "Attributes" in self.plotSpecs[histName] and \
+           "GetXaxis.SetRangeUser" in self.plotSpecs[histName]["Attributes"]:
+           return self.plotSpecs[histName]["Attributes"]["GetXaxis.SetRangeUser"][1]
+        else:
+            return None
 
     
     #################################

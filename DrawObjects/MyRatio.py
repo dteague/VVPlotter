@@ -6,24 +6,31 @@ class MyRatio(MyObject, object):
         super(MyRatio, self).__init__()
         if drawStyle == 'compare' and signal:
             self.myObj = r.TRatioPlot(stack, signal)
+            self.yUpTitle = "a.u."
+            self.yDownTitle = "sig/MC"
         elif drawStyle == 'ratio' and data:
             self.myObj = r.TRatioPlot(stack, data)
+            self.yUpTitle = "Events/bin"
+            self.yDownTitle = "Data/MC"
 
-    def setAttributes(self):
         self.myObj.SetRightMargin(0.04)
+        self.myObj.SetLeftMargin(0.11)
         self.myObj.SetUpTopMargin(0.07)
         self.myObj.SetSeparationMargin(0.01)
+            
+    def setAttributes(self):
         self.myObj.GetLowerRefYaxis().SetRangeUser(0,2)
         self.myObj.GetLowerRefGraph().SetLineWidth(2)
         self.myObj.GetLowerRefYaxis().SetNdivisions(505)
         self.myObj.GetUpperRefObject().SetMinimum(0.001)
-        
+        self.myObj.GetUpperRefYaxis().SetTitle(self.yUpTitle)
+        self.myObj.GetLowerRefYaxis().SetTitle(self.yDownTitle)
         
     def getUpperPad(self):
         return self.myObj.GetUpperPad()
 
     def setMax(self, maxVal):
-        self.myObj.GetUpperRefObject().SetMaximum(maxVal*1.3)
+        self.myObj.GetUpperRefObject().SetMaximum(maxVal)
 
     
     def isValid(self):

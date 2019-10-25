@@ -1,7 +1,6 @@
 import ROOT as r
 from MyObject import MyObject
 import subprocess
-import os
 
 class MyCanvas(MyObject, object):
     def __init__(self, histName):
@@ -18,10 +17,7 @@ class MyCanvas(MyObject, object):
 
     def saveAsPDF(self,path):
         outputName = "%s/%s" % (path, self.myObj.GetName())
-        
         self.myObj.Print(outputName + ".png")
-        
-        FNULL = open(os.devnull, 'w')
-        subprocess.call(["convert", "%s.png"%outputName, "%s.png"%outputName])
+        subprocess.call(["convert", "%s.png"%outputName, "%s.pdf"%outputName])
         
         

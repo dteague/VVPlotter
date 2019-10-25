@@ -77,12 +77,27 @@ def getNormedHistos(inFile, info, histName, chan):
         hist.SetName(name)
     return groupHists
 
-def addOverflow(inHist):
+def addOverflow(inHist, highRange=None):
     binMax = inHist.GetNbinsX()
-    inHist.SetBinContent(binMax, inHist.GetBinContent(binMax) + inHist.GetBinContent(binMax+1) )
+    
+    if highRange:
+        bin = inHist.FindBin(highRange)
+        if highRange != inHist.GetXaxis().GetBinLowEdge(bin): bin += 1
+        extra = inHist.Integral(bin, binMax+1)
+        binMax = bin-1
+    else:
+        extra = inHist.GetBinContent(binMax+1)
+    inHist.SetBinContent(binMax, inHist.GetBinContent(binMax) + extra)
     
 def getDrawOrder(groupHists, drawObj, info):
-    drawTmp = [(hist.Integral(), key) for key, hist in groupHists.iteritems() if key in drawObj]
+    drawTmp = list()
+    for key in drawObj:
+        try:
+            drawTmp.append((groupHists[key].Integral(), key))
+        except:
+            print("Missing the histograms for the group %s" % key)
+            exit(0)
+    
     drawTmp.sort()
     return [(i[1], groupHists[i[1]]) for i in drawTmp]
 
