@@ -18,9 +18,9 @@ def sl(listF):
     return newList
 
 class LogFile:
-    def __init__(self, name, info):
+    def __init__(self, name, info, path='.'):
         self.plotTable = PrettyTable(["Plot Group", "Weighted Events", "Error"])
-        self.output = open("%s.txt" % name, "w")
+        self.output = open("%s/%s_info.log" % (path,name), "w")
         self.info = info
         self.hists = [None, None, None, None]
         self.callTime = ""

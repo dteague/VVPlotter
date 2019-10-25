@@ -6,8 +6,14 @@ import ROOT as r
 
 class InfoGetter:
     def __init__(self, analysis, selection, inFile):
-        adm_path = '/afs/cern.ch/work/d/dteague/AnalysisDatasetManager'
-        
+        try:
+            adm_path = os.environ['ADM_PATH']
+        except:
+            print('The Analysis Dataset Manager is found by the variable ADM_PATH')
+            print('Please set this path and consider setting it in your .bashrc')
+            exit(1)
+        #adm_path = '
+
         self.analysis = analysis
         self.selection = selection
         self.groupInfo = self.readAllInfo("%s/PlotGroups/%s.py" % (adm_path, analysis))

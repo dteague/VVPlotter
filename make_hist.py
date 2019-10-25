@@ -5,6 +5,7 @@ import ROOT as r
 from Utilities.InfoGetter import InfoGetter
 import Utilities.StyleHelper as style
 import Utilities.configHelper as configHelper
+from Utilities.makeSimpleHtml import writeHTML
 from Utilities.LogFile import LogFile
 from DrawObjects.MyCanvas import MyCanvas
 from DrawObjects.MyLegend import MyLegend
@@ -48,9 +49,12 @@ drawObj = {
 
 # In out
 inFile = r.TFile(args.infile)
-outFile = r.TFile(args.outfile, "RECREATE")
 
-info = InfoGetter(args.analysis, args.selection, inFile)
+anaSel = args.analysis.split('/')
+if len(anaSel) == 1:
+    anaSel.append('')
+
+info = InfoGetter(anaSel[0], anaSel[1], inFile)
 if args.drawStyle == 'compare':
     info.setLumi(-1)
 else:
@@ -71,6 +75,13 @@ if args.signal and args.signal not in drawObj:
     exit(1)
 signalName = args.signal
 channels = args.channels.split(',')
+
+basePath = '/eos/home-{0:1.1s}/{0}/www'.format(os.environ['USER'])
+basePath += '/%s/%s/%s' % ('PlottingResults', args.analysis, args.path)
+configHelper.checkOrCreateDir('%s' % (basePath))
+configHelper.checkOrCreateDir('%s/plots' % (basePath))
+configHelper.checkOrCreateDir('%s/logs' % (basePath))
+outFile = r.TFile("%s/plots/output.root"%basePath, "UPDATE")
 
 for histName in info.getListOfHists():
     for chan in channels:
@@ -142,15 +153,17 @@ for histName in info.getListOfHists():
         legend.getAndDraw()
         cmsText.getAndDraw(curPad, "Preliminary")
         canvas.writeOut(outFile)
+        
+        # setup log file
+        logger = LogFile(histName, info, basePath+"/logs")
+        logger.addMetaInfo(callTime, command)
+        logger.addMC(groupHists, drawObj.keys())
+        if signal:
+            logger.addSignal(signal, signalName)
+        logger.writeOut()
 
-        # # setup log file
-        # logger = LogFile(histName, info)
-        # logger.addMetaInfo(callTime, command)
-        # logger.addMC(groupHists, drawOrder)
-        # if signal:
-        #     logger.addSignal(signal, signalName)
-        # logger.writeOut()
+        canvas.saveAsPDF(basePath+"/plots")
 
         
-        
+writeHTML(basePath, args.analysis)
         

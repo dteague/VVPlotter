@@ -1,16 +1,16 @@
 import ROOT as r
 import argparse
+import os
+import time
 
 def getComLineArgs():
     parser = argparse.ArgumentParser()
-    parser.add_argument("-o", "--outfile", type=str, default="output.root",
-                        help="Output root file name")
     parser.add_argument("-i", "--infile", type=str, required=True,
                         help="Input root file (output of makeHistFile.py)")
     parser.add_argument("-a", "--analysis", type=str, required=True,
                         help="Specificy analysis used")
-    parser.add_argument("-s", "--selection", type=str, default="",
-                        help="Specificy selection level to run over")
+    parser.add_argument("-p", "--path", type=str, default=time.strftime("%Y_%m_%d"),
+                        help="Extra path (defaults to day)")
     parser.add_argument("--drawStyle", type=str, default='stack', help='Way to draw graph',
                         choices=['stack', 'compare'])
     parser.add_argument("-c", "--channels", type=str, default="all",
@@ -106,4 +106,7 @@ def getMax(stack, signal=None, data=None):
     return maxHeight
     
  
+def checkOrCreateDir(path):
+    if not os.path.exists(path):
+        os.makedirs(path)
 
