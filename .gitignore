@@ -1,0 +1,7 @@
+*.pdf
+*.pyc
+*/*.pyc
+*.root
+*_C*
+*.so
+*~
