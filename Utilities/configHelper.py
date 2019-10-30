@@ -9,13 +9,13 @@ def getComLineArgs():
                         help="Input root file (output of makeHistFile.py)")
     parser.add_argument("-a", "--analysis", type=str, required=True,
                         help="Specificy analysis used")
-    parser.add_argument("-p", "--path", type=str, default=time.strftime("%Y_%m_%d"),
+    parser.add_argument("-p", "--path", type=str, default='',
                         help="Extra path (defaults to day)")
     parser.add_argument("--drawStyle", type=str, default='stack', help='Way to draw graph',
                         choices=['stack', 'compare'])
     parser.add_argument("-c", "--channels", type=str, default="all",
                         help="List (separate by commas) of channels to plot")
-    parser.add_argument("-sig", "--signal", type=str, default="",
+    parser.add_argument("-sig", "--signal", type=str, default='',
                         help="Name of the group to be made into the Signal")
     
     parser.add_argument("-l", "--lumi", type=float, default=35.9,

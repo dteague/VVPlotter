@@ -13,6 +13,7 @@ from DrawObjects.MyRatio import MyRatio
 from DrawObjects.MyPaveText import MyPaveText
 import datetime
 import sys
+import time
 
 # run time variables
 callTime = str(datetime.datetime.now())
@@ -28,6 +29,8 @@ r.gROOT.LoadMacro("tdrstyle.C")
 r.setTDRStyle()
 r.gStyle = r.tdrStyle
 r.gROOT.ForceStyle()
+
+exceptions = ["Rebin"]
 
 # variable setup
 ### If setting up new run (or added a draw group), set drawObj = None to get new list
@@ -77,8 +80,13 @@ if args.signal and args.signal not in drawObj:
 signalName = args.signal
 channels = args.channels.split(',')
 
+extraPath = time.strftime("%Y_%m_%d")
+if args.path:
+    extraPath = args.path+'/'+extraPath
+
+
 basePath = '/eos/home-{0:1.1s}/{0}/www'.format(os.environ['USER'])
-basePath += '/%s/%s/%s_%s' % ('PlottingResults', args.analysis, args.path, args.drawStyle)
+basePath += '/%s/%s/%s_%s' % ('PlottingResults', args.analysis, extraPath, args.drawStyle)
 configHelper.checkOrCreateDir('%s' % (basePath))
 configHelper.checkOrCreateDir('%s/plots' % (basePath))
 configHelper.checkOrCreateDir('%s/logs' % (basePath))
@@ -87,13 +95,11 @@ outFile = r.TFile("%s/output.root"%basePath, "UPDATE")
 for histName in info.getListOfHists():
     for chan in channels:
         groupHists = configHelper.getNormedHistos(inFile, info, histName, chan)
-        if not groupHists or groupHists.values()[0].InheritsFrom("TH2"):
+        if not groupHists or groupHists.values()[0].InheritsFrom("TH2") or not info.isInPlotSpec(histName):
             continue
-        for hist in groupHists.values():
-            try:
+        for key, hist in groupHists.iteritems():
+            if "Rebin" in info.getPlotSpec(histName):
                 hist.Rebin(info.getPlotSpec(histName)["Rebin"])
-            except:
-                pass
             configHelper.addOverflow(hist, info.getUpBinUser(histName))
         ordHists = configHelper.getDrawOrder(groupHists, drawObj.keys(), info)
 
@@ -149,10 +155,9 @@ for histName in info.getListOfHists():
             rp.GetUpperPad().cd()
             ratioPlot.setMax(maxHeight)
 
-        try:
-            style.setAttributes(stack.GetHistogram(), info.getPlotSpec(histName)["Attributes"])
-        except:
-            pass
+        style.setAttributes(rp.GetUpperRefObject().GetHistogram(), info.getPlotSpec(histName), exceptions)
+        style.setAttributes(rp.GetLowerRefGraph(), info.getPlotSpec(histName), exceptions)
+        
         
         if statError: statError.Draw("E2same")
         if data: data.Draw("same")

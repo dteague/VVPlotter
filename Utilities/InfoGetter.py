@@ -22,13 +22,13 @@ class InfoGetter:
         self.listOfHists = self.setupListOfHists(inFile)
         self.sumweights = self.setupSumWeight(inFile)
         self.objectStyle = self.readAllInfo("style.py")
-        self.plotSpecs = self.readAllInfo("plotInfo.py")
+        self.plotSpecs = self.setupGraphSpecs(self.readAllInfo("plotInfo.py"))
         self.lumi = 35900 #default
         
-        if os.path.isfile("%s/PlotObjects/%s/%s.json" % (adm_path, analysis, selection)):
-            self.objectInfo = self.readAllInfo("%s/PlotObjects/%s/%s.json" % (adm_path, analysis, selection))
-        else:
-            self.objectInfo = self.readAllInfo("%s/PlotObjects/%s.json" % (adm_path, analysis))
+        # if os.path.isfile("%s/PlotObjects/%s/%s.json" % (adm_path, analysis, selection)):
+        #     self.objectInfo = self.readAllInfo("%s/PlotObjects/%s/%s.json" % (adm_path, analysis, selection))
+        # else:
+        #     self.objectInfo = self.readAllInfo("%s/PlotObjects/%s.json" % (adm_path, analysis))
 
 ##################################
 #  _   _      _                  #
@@ -79,6 +79,15 @@ class InfoGetter:
                 return_map[bkg] = key
         return return_map
 
+    def setupGraphSpecs(self, input):
+        return_map = dict()
+        for action, dic in input.iteritems():
+            for hist, value in dic.iteritems():
+                if hist not in return_map:
+                    return_map[hist] = dict()
+                return_map[hist][action] = value
+        return return_map
+    
     def setupListOfHists(self, inFile):
         return_list = []
         inFile.cd()
@@ -126,9 +135,6 @@ class InfoGetter:
     def getStyle(self, group):
         return self.groupInfo[group]['Style']
 
-    def getAxisInfo(self, histName):
-        return self.objectInfo[histName]['Attributes']
-
     def getStyleInit(self, typeName):
         return self.objectStyle[typeName]['Init']
 
@@ -149,17 +155,20 @@ class InfoGetter:
 
     def getGroups(self):
         return self.groupInfo.keys()
-
+    
     def getPlotSpec(self, histName):
         return self.plotSpecs[histName]
 
     def getUpBinUser(self, histName):
-        if histName in self.plotSpecs and \
-           "Attributes" in self.plotSpecs[histName] and \
-           "GetXaxis.SetRangeUser" in self.plotSpecs[histName]["Attributes"]:
-           return self.plotSpecs[histName]["Attributes"]["GetXaxis.SetRangeUser"][1]
+        if "GetXaxis.SetRangeUser" in self.plotSpecs[histName]:
+            return self.plotSpecs[histName]["GetXaxis.SetRangeUser"][1]
         else:
             return None
+
+    def isInPlotSpec(self, histName):
+        return histName in self.plotSpecs
+            
+
 
     
     #################################

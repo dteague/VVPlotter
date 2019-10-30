@@ -39,14 +39,14 @@ def getLineColor(fillColor):
     
     return rmod*0x10000 + gmod*0x100 + bmod
 
-def setAttributes(obj, attributes, isStack=False):
+def setAttributes(obj, attributes, exceptions=[]):
     for func, val in attributes.iteritems():
-        if isStack and "Get" in func:
-            runModule(obj.GetHistogram(), func, val)
+        if func in exceptions:
+            continue
         elif isinstance(val, tuple):
             runModule(obj, func)(*val)
         else:
-            runModule(obj, func)(val)
+            runModule(obj, func)(val)            
             
 def runModule(module, func):
     funcList = func.split('.')

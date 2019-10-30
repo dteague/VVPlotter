@@ -22,7 +22,7 @@ class MyRatio(MyObject, object):
         self.myObj.GetLowerRefYaxis().SetRangeUser(0,2)
         self.myObj.GetLowerRefGraph().SetLineWidth(2)
         self.myObj.GetLowerRefYaxis().SetNdivisions(505)
-        self.myObj.GetUpperRefObject().SetMinimum(0.001)
+        self.myObj.GetUpperRefObject().SetMinimum(0.0001)
         self.myObj.GetUpperRefYaxis().SetTitle(self.yUpTitle)
         self.myObj.GetLowerRefYaxis().SetTitle(self.yDownTitle)
         
