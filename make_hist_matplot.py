@@ -8,7 +8,7 @@ import Utilities.configHelper as configHelper
 from Utilities.pyHist import pyHist
 import numpy as np
 import matplotlib.pyplot as plt
-from matplotlib import gridspec
+from matplotlib import gridspec, colors
 import datetime
 import sys
 import time
@@ -21,18 +21,18 @@ command = ' '.join(sys.argv)
 args = configHelper.getComLineArgs()
 
 drawObj = {
-           # "ttz"       : "fill-mediumseagreen",
-           # "rare"      : "fill-hotpink",
-           # "ttXY"      : "fill-cornflowerblue",
-           # "ttw"       : "fill-darkgreen",
-           # "xg"        : "fill-indigo",
-           # "tth"       : "fill-slategray",
-           # "2016"      : "fill-red",
+           "ttz"       : "mediumseagreen",
+           "rare"      : "hotpink",
+           "ttXY"      : "cornflowerblue",
+           "ttw"       : "darkgreen",
+           "xg"        : "indigo",
+           "tth"       : "slategray",
+           "2016"      : "red",
 
           # "ttt"       : "fill-hotpink",
            # "2017"      : "fill-green",
-          "ttt_line"  : "nofill-cornflowerblue-thick",
-           "tttt_line" : "nofill-hotpink",
+          # "ttt_line"  : "nofill-cornflowerblue-thick",
+          #  "tttt_line" : "nofill-hotpink",
            # "other"     : "fill-hotpink",
 }
 
@@ -60,7 +60,7 @@ if not drawObj:
 
 channels = args.channels.split(',')
 
-
+colorList = ["thistle", "mediumorchid", "darkviolet", "darkorchid", "indigo", "blueviolet", "rebeccapurple"]
 
 for histName in info.getListOfHists():
     for chan in channels:
@@ -70,12 +70,15 @@ for histName in info.getListOfHists():
         pyGroupHists = dict()
         if not groupHists or groupHists.values()[0].InheritsFrom("TH2"):
             continue
+        i=0
         for key, hist in groupHists.iteritems():
-            pyGroupHists[key] = pyHist(info.getLegendName(key), hist, )
+            if key not in drawObj: continue
+            
+            pyGroupHists[key] = pyHist(info.getLegendName(key), hist, drawObj[key])
             if nbins == 0:
                 nbins = pyGroupHists[key].nBins
                 width = pyGroupHists[key].width
-
+            i+=1
         gs = gridspec.GridSpec(4, 1)
         up = plt.subplot(gs[0:3, 0])
         up.xaxis.set_major_formatter(plt.NullFormatter())
@@ -86,10 +89,10 @@ for histName in info.getListOfHists():
         total = np.zeros(nbins)
         i= 0
         for hist in pyGroupHists.values():
-            if i >= len(colors):
+            if i >= len(colorList):
                 break
 
-            up.bar(hist.leftEdge, hist.yVal, width, color=colors[i], bottom=total)
+            up.bar(bottom=total, **hist.barVars())
             total = np.add(total, hist.getValues())
             i+= 1
             
