@@ -36,12 +36,12 @@ exceptions = ["Rebin"]
 ### If setting up new run (or added a draw group), set drawObj = None to get new list
 # drawObj = None
 drawObj = {
-           # "ttz"       : "fill-mediumseagreen",
+           "ttz"       : "fill-mediumseagreen",
            # "rare"      : "fill-hotpink",
-           # "ttXY"      : "fill-cornflowerblue",
-           # "ttw"       : "fill-darkgreen",
+           "ttXY"      : "fill-cornflowerblue",
+           "ttw"       : "fill-darkgreen",
            # "xg"        : "fill-indigo",
-           # "tth"       : "fill-slategray",
+           "tth"       : "fill-slategray",
            # "2016"      : "fill-red",
 
           # "ttt"       : "fill-hotpink",
@@ -62,6 +62,7 @@ info = InfoGetter(anaSel[0], anaSel[1], inFile)
 if args.drawStyle == 'compare':
     info.setLumi(-1)
 else:
+    print args.lumi
     info.setLumi(args.lumi*1000)
 
 if not drawObj:
@@ -137,7 +138,10 @@ for histName in info.getListOfHists():
             data = None
         if args.drawStyle == 'stack':
             pass
+        if args.drawStyle == "sigcompare":
+            data = None
 
+        
         canvas = MyCanvas(histName)
         canvas.getAndDraw().cd()
         
@@ -146,8 +150,8 @@ for histName in info.getListOfHists():
         cmsText = MyPaveText(info.getLumi())
         
         if args.no_ratio or not ratioPlot.isValid():
-            stack.Draw()
-            # style.setAttributes(stack, info.getAxisInfo(histName))
+            stack.Draw("hist")
+            style.setAttributes(stack.GetHistogram(), info.getPlotSpec(histName), exceptions)
             if signal: signal.Draw("same")
             stack.GetHistogram().SetMaximum(maxHeight)
         else:

@@ -4,7 +4,7 @@ from MyObject import MyObject
 class MyPaveText(MyObject, object):
     def __init__(self, lumi):
         super(MyPaveText,self).__init__()
-        self.lumiText = "%f fb^{-1}" % lumi if lumi>0 else ""
+        self.lumiText = "%.1f fb^{-1}" % (lumi/1000) if lumi>0 else ""
         self.lumiText += " (13 TeV)"
         
 

@@ -9,7 +9,7 @@ info = {
         "Init" : "nofill-red-thick",
         "Attributes" : {
             "SetMarkerStyle" : 2,
-#            "Scale" : 5,
+           "Scale" : 50,
         }
     },
 }

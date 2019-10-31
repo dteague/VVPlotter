@@ -12,7 +12,7 @@ def getComLineArgs():
     parser.add_argument("-p", "--path", type=str, default='',
                         help="Extra path (defaults to day)")
     parser.add_argument("--drawStyle", type=str, default='stack', help='Way to draw graph',
-                        choices=['stack', 'compare'])
+                        choices=['stack', 'compare', 'sigratio'])
     parser.add_argument("-c", "--channels", type=str, default="all",
                         help="List (separate by commas) of channels to plot")
     parser.add_argument("-sig", "--signal", type=str, default='',
