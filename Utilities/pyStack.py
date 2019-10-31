@@ -1,5 +1,6 @@
 import ROOT as r
 from matplotlib import colors as clr
+import numpy as np
 
 class pyStack():
     def __init__(self, drawOrder):
@@ -11,9 +12,12 @@ class pyStack():
         self.bins = None
         self.hists = list()
         self.rHistTotal = None
+        self.align = 'left'
+        self.title = None
         
         for name, hist in drawOrder:
             self.names.append(name)
+            if not self.title: self.title =hist.GetName()
             if not self.bins:  self._setupBins(hist)
             self.hists.append(hist)
             tmp = list()
@@ -21,10 +25,9 @@ class pyStack():
                 tmp.append(hist.GetBinContent(i))
             self.stack.append(tmp)
             if not self.rHistTotal:
-                self.rHistTotal = hist.Clone()
+                self.rHistTotal = hist.Clone(self.title)
             else:
                 self.rHistTotal.Add(hist)
-
         
     def setColors(self, colorMap):
         for name in self.names:
@@ -48,9 +51,17 @@ class pyStack():
         self.bins = list()
         for i in range(1, hist.GetNbinsX()+2):
             self.bins.append(hist.GetBinLowEdge(i))
+
+    def getRHist(self):
+        return self.rHistTotal
+
+                
+    def getXVal(self):
+        return [self.bins[:-1]]*len(self.stack)
+
         
     def getInputs(self):
-        return {"x":self.stack, "bins":self.bins, "histtype":'stepfilled', "color":self.colors, "stacked":True, "label":self.fancyNames}
+        return {"weights":self.stack, "x":self.getXVal(), "bins":self.bins, "histtype":'stepfilled', "color":self.colors, "stacked":True, "label":self.fancyNames, 'align':self.align}
 
     def applyPatches(self, plot, patches):
         for p, ec in zip(patches, self.edgecolors):

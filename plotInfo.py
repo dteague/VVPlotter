@@ -1,19 +1,19 @@
 # -*- coding: utf-8 -*-
 
 info = {
-    "GetXaxis.SetTitle" : {
-        "HT" :             "H_{T} (GeV)",
-        "Met" :            "p_{T}^{miss} (GeV)",
+    "set_xlabel" : {
+        "HT" :             "$H_{T} (GeV)$",
+        "Met" :            "$p_{T}^{miss}$ (GeV)",
         "centrality":      "Centrality",
         "sphericity" :     "sphericity",
-        "nbjet" :          "N_{b}",
-        "njet" :           "N_{jets}",
-        "nleps" :          "N_{leps}", 
-        "ptl1" :           "p_{T}(\ell_{1})\ (GeV)",
-        "ptl2" :           "p_{T}(\ell_{2})\ (GeV)",
-        "ptj1" :           "p_{T}(j_{1}) (GeV)",
-        "ptj2" :           "p_{T}(j_{2}) (GeV)",
-        "ptj3" :           "p_{T}(j_{3}) (GeV)",
+        "nbjet" :          "$N_{b}$",
+        "njet" :           "$N_{jets}$",
+        "nleps" :          "$N_{leps}$", 
+        "ptl1" :           "$p_{T}(\ell_{1})$ (GeV)",
+        "ptl2" :           "$p_{T}(\ell_{2})$ (GeV)",
+        "ptj1" :           "$p_{T}(j_{1})$ (GeV)",
+        "ptj2" :           "$p_{T}(j_{2})$ (GeV)",
+        "ptj3" :           "$p_{T}(j_{3})$ (GeV)",
         "etaj1" :          "#eta(j_{1})",
         "etaj2" :          "#eta(j_{2})",
         "etaj3" :          "#eta(j_{3})",
@@ -54,7 +54,7 @@ info = {
         "etab3" :     20,
     },
     
-    "GetXaxis.SetRangeUser" : {
+    "set_xlim" : {
         "nbjet" : (0, 8),
         "njet" : (0, 12),
         "nleps" : (0, 5),

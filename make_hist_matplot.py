@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
+
 import os
 import ROOT as r
 
@@ -18,6 +18,7 @@ import time
 # run time variables
 callTime = str(datetime.datetime.now())
 command = ' '.join(sys.argv)
+r.gErrorIgnoreLevel=r.kError
 
 # Setup
 args = config.getComLineArgs()
@@ -60,31 +61,63 @@ if not drawObj:
     print("}")
     exit()
 
-channels = args.channels.split(',')
 
-colorList = ["thistle", "mediumorchid", "darkviolet", "darkorchid", "indigo", "blueviolet", "rebeccapurple"]
+if args.signal and args.signal not in drawObj:
+    print( "signal not in list of groups!")
+    print( drawObj.keys())
+    exit(1)
+signalName = args.signal
+channels = args.channels.split(',')
 
 for histName in info.getListOfHists():
     if not info.isInPlotSpec(histName): continue
     
     for chan in channels:
+        signal = None
+        data = None
+        ratio = None
+        
         groupHists = config.getNormedHistos(inFile, info, histName, chan)
-        pyGroupHists = dict()
         if not groupHists or groupHists.values()[0].InheritsFrom("TH2"):
             continue
 
-        drawOrder = config.getDrawOrder(groupHists, drawObj, info)
-        
+        exclude = []
+        # signal
+        if signalName in groupHists:
+            signal = pyHist(info.getLegendName(signalName), groupHists[signalName], drawObj[signalName])
+            exclude.append(signalName)
+                    
+        # data
+        if False:
+            data = pyHist("Data", groupHists['data'], 'black')
+            exclude.append('data')
+                    
+        drawOrder = config.getDrawOrder(groupHists, drawObj, info, ex=[signalName])
         stacker = pyStack(drawOrder)
         stacker.setColors(drawObj)
         stacker.setLegendNames(info)
-        
-        pad = pyPad(plt, False)
+
+        # ratio
+        if signal:
+            divide = r.TGraphAsymmErrors(signal.getRHist(), stacker.getRHist(), "pois")
+            ratio = pyHist("Ratio", divide, "black", isTH1=False)
+                                                        
+        pad = pyPad(plt, ratio!=None)
         
         n, bins, patches = pad.getMainPad().hist(**stacker.getInputs())
         stacker.applyPatches(plt, patches)
 
+        if signal:
+            pad.getMainPad().errorbar(**signal.getInputs())
+        if data:
+            pad.getMainPad().errorbar(**data.getInputs())
+
         pad.setLegend()
+        pad.axisSetup(info.getPlotSpec(histName))
+
+        if ratio:
+            pad.getSubMainPad().errorbar(**ratio.getInputs())
+
         plt.show()
         
         

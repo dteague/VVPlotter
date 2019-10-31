@@ -91,11 +91,10 @@ def addOverflow(inHist, highRange=None):
         extra = inHist.GetBinContent(binMax+1)
     inHist.SetBinContent(binMax, inHist.GetBinContent(binMax) + extra)
     
-def getDrawOrder(groupHists, drawObj, info):
+def getDrawOrder(groupHists, drawObj, info, ex=[]):
     drawTmp = list()
-    print groupHists.keys()
     for key in drawObj:
-        
+        if key in ex: continue
         try:
             drawTmp.append((groupHists[key].Integral(), key))
         except:
