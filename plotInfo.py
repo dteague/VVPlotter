@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 info = {
     "GetXaxis.SetTitle" : {
         "HT" :             "H_{T} (GeV)",
@@ -23,9 +25,9 @@ info = {
         "etab3" :          "#eta(b_{3})",
         "ptj1OverHT" :     "p_{T}(j_{1}) / H_{T}",
         "ptb1OverHT" :     "p_{T}(b_{1}) / H_{T}",
-        "dphi_l1j1"  :     "\Delta\phi(\ell_{1}, j_{1})",
-        "dphi_l1j2"  :     "\Delta\phi(\ell_{1}, j_{2})",
-        "dphi_l1j3"  :     "\Delta\phi(\ell_{1}, j_{3})",
+        "dphi_l1j1"  :     "Δφ(ℓ_{1}, j_{1})",
+        "dphi_l1j2"  :     "Δφ(ℓ_{1}, j_{2})",
+        "dphi_l1j3"  :     "Δφ(ℓ_{1}, j_{3})",
         
     },
     

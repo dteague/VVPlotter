@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 import os
 import ROOT as r
 
@@ -7,9 +8,9 @@ import Utilities.StyleHelper as style
 import Utilities.configHelper as config
 from Utilities.pyHist import pyHist
 from Utilities.pyStack import pyStack
+from Utilities.pyPad import pyPad
 import numpy as np
 import matplotlib.pyplot as plt
-from matplotlib import gridspec
 import datetime
 import sys
 import time
@@ -76,19 +77,14 @@ for histName in info.getListOfHists():
         
         stacker = pyStack(drawOrder)
         stacker.setColors(drawObj)
-
-        gs = gridspec.GridSpec(4, 1)
-        up = plt.subplot(gs[0:3, 0])
-        down = plt.subplot(gs[3:4, 0])
-        up.xaxis.set_major_formatter(plt.NullFormatter())
-        up.tick_params(direction="in")
-        down.tick_params(direction="in")
-        up.get_shared_x_axes().join(up,down)
+        stacker.setLegendNames(info)
         
+        pad = pyPad(plt, False)
         
-        n, bins, patches = up.hist(**stacker.getInputs())
+        n, bins, patches = pad.getMainPad().hist(**stacker.getInputs())
         stacker.applyPatches(plt, patches)
-        
+
+        pad.setLegend()
         plt.show()
         
         

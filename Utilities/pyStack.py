@@ -7,7 +7,7 @@ class pyStack():
         self.colors = list()
         self.edgecolors = list()
         self.names = list()
-        self.fancyNames = list()
+        self.fancyNames = None
         self.bins = None
         self.hists = list()
         self.rHistTotal = None
@@ -30,20 +30,27 @@ class pyStack():
         for name in self.names:
             self.colors.append(colorMap[name])
             self.edgecolors.append(self._darkenColor(colorMap[name]))
-            
+
+    def setLegendNames(self, info):
+        self.fancyNames = list()
+        for name in self.names:
+            fName = info.getLegendName(name)
+            if '\\' in fName:
+                fName = r'$%s$' % fName
+            self.fancyNames.append(fName)
+
     def _darkenColor(self, color):
         cvec = clr.to_rgba(color)
         dark = 0.3
         return tuple([i - dark if i > dark else 0.0 for i in cvec])
-
-            
+    
     def _setupBins(self, hist):
         self.bins = list()
         for i in range(1, hist.GetNbinsX()+2):
             self.bins.append(hist.GetBinLowEdge(i))
         
     def getInputs(self):
-        return {"x":self.stack, "bins":self.bins, "histtype":'stepfilled', "color":self.colors, "stacked":True,}
+        return {"x":self.stack, "bins":self.bins, "histtype":'stepfilled', "color":self.colors, "stacked":True, "label":self.fancyNames}
 
     def applyPatches(self, plot, patches):
         for p, ec in zip(patches, self.edgecolors):
