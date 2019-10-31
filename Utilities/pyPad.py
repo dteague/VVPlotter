@@ -58,6 +58,7 @@ class pyPad:
         self.rightAlignLabel(self.up.get_yaxis(), True)
         if self.down:
             self.down.set_ylabel("Signal/MC")
+            self.down.set_ylim(bottom=0)
 
     def rightAlignLabel(self, axis, isYaxis=False):
         label = axis.get_label()

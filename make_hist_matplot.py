@@ -9,6 +9,7 @@ import Utilities.configHelper as config
 from Utilities.pyHist import pyHist
 from Utilities.pyStack import pyStack
 from Utilities.pyPad import pyPad
+from Utilities.makeSimpleHtml import writeHTML
 import numpy as np
 import matplotlib.pyplot as plt
 import datetime
@@ -19,6 +20,24 @@ import time
 callTime = str(datetime.datetime.now())
 command = ' '.join(sys.argv)
 r.gErrorIgnoreLevel=r.kError
+
+font = {'family' : 'sans',
+        'weight' : 'normal',
+        }
+
+plt.rc('font', **font)
+
+
+SMALL_SIZE = 12
+MEDIUM_SIZE = 16
+plt.rc('font', size=SMALL_SIZE) 
+plt.rc('axes', titlesize=SMALL_SIZE) 
+plt.rc('axes', labelsize=MEDIUM_SIZE) 
+plt.rc('xtick', labelsize=MEDIUM_SIZE) 
+plt.rc('ytick', labelsize=MEDIUM_SIZE) 
+plt.rc('legend', fontsize=SMALL_SIZE) 
+
+
 
 # Setup
 args = config.getComLineArgs()
@@ -69,6 +88,17 @@ if args.signal and args.signal not in drawObj:
 signalName = args.signal
 channels = args.channels.split(',')
 
+# HTML setup
+extraPath = time.strftime("%Y_%m_%d")
+if args.path:
+    extraPath = args.path+'/'+extraPath
+
+basePath = '/eos/home-{0:1.1s}/{0}/www'.format(os.environ['USER'])
+basePath += '/%s/%s/%s_%s' % ('PlottingResults', args.analysis, extraPath, args.drawStyle)
+config.checkOrCreateDir('%s' % (basePath))
+config.checkOrCreateDir('%s/plots' % (basePath))
+config.checkOrCreateDir('%s/logs' % (basePath))
+
 for histName in info.getListOfHists():
     if not info.isInPlotSpec(histName): continue
     
@@ -118,12 +148,15 @@ for histName in info.getListOfHists():
         if ratio:
             pad.getSubMainPad().errorbar(**ratio.getInputs())
 
-        plt.show()
-        
-        
+        fig = plt.gcf()
+        fig.set_size_inches(8,8)
+                
+        plt.savefig("%s/plots/%s.png" % (basePath, histName), format="png", bbox_inches='tight')
+        plt.savefig("%s/plots/%s.pdf" % (basePath, histName), format="pdf", bbox_inches='tight')
         plt.clf()
         plt.cla()
         plt.close()
 
 
+writeHTML(basePath, args.analysis)
 

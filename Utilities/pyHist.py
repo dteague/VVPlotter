@@ -17,7 +17,6 @@ class pyHist:
         if '\\' in self.name:
                 self.name = r'$%s$' % self.name
             
-        
         if isTH1:
             self.setupTH1(rootHist)
         else:
@@ -44,8 +43,7 @@ class pyHist:
             self.y.append(float(y))
             self.yerr.append(rootGraph.GetErrorY(i))
             self.xerr.append(rootGraph.GetErrorX(i))
-        print self.x
-            
+        
     def getRHist(self):
         return self.hist
 
