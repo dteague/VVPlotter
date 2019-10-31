@@ -63,6 +63,8 @@ def getNormedHistos(inFile, info, histName, chan):
         if hist.Integral() <= 0:
             inFile.cd()
             continue
+        if "Rebin" in info.getPlotSpec(histName):
+            hist.Rebin(info.getPlotSpec(histName)["Rebin"])
         hist.Scale(info.getXSec(sample) / info.getSumweight(sample))
         if group not in groupHists.keys():
             groupHists[group] = hist.Clone()
@@ -91,7 +93,9 @@ def addOverflow(inHist, highRange=None):
     
 def getDrawOrder(groupHists, drawObj, info):
     drawTmp = list()
+    print groupHists.keys()
     for key in drawObj:
+        
         try:
             drawTmp.append((groupHists[key].Integral(), key))
         except:

@@ -14,6 +14,7 @@ class pyHist:
         for i in range(1, rootHist.GetNbinsX()+1):
             self.leftEdge.append(rootHist.GetBinLowEdge(i))
             self.yVal.append(rootHist.GetBinContent(i))
+        self.leftEdge.append(rootHist.GetBinLowEdge(self.nBins+1))
         self.color = color
         self.edgecolor = self.darkenColor()
 
