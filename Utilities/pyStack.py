@@ -23,6 +23,8 @@ class pyStack():
             tmp = list()
             for i in range(1, hist.GetNbinsX()+1):
                 tmp.append(hist.GetBinContent(i))
+            tmp[0] += hist.GetBinContent(0)
+            tmp[-1] += hist.GetBinContent(hist.GetNbinsX()+1)
             self.stack.append(tmp)
             if not self.rHistTotal:
                 self.rHistTotal = hist.Clone(self.title)
@@ -43,7 +45,7 @@ class pyStack():
             self.fancyNames.append(fName)
 
     def _darkenColor(self, color):
-        cvec = clr.to_rgba(color)
+        cvec = clr.to_rgb(color)
         dark = 0.3
         return tuple([i - dark if i > dark else 0.0 for i in cvec])
     
@@ -59,11 +61,17 @@ class pyStack():
     def _getXVal(self):
         return [self.bins[:-1]]*len(self.stack)
 
-    
-    
-        
-    def getInputs(self):
-        return {"weights":self.stack, "x":self._getXVal(), "bins":self.bins, "histtype":'stepfilled', "color":self.colors, "stacked":True, "label":self.fancyNames, 'align':self.align}
+    def getRange(self):
+        if self.bins[0] < 0:
+            return (self.bins[0], self.bins[-1])
+
+        nbins = self.rHistTotal.GetNbinsX()
+        for i, val in enumerate(self.bins[::-1]):
+            if self.rHistTotal.GetBinContent(nbins-i) > 0.:
+                return (self.bins[0], val)
+
+    def getInputs(self, **kwargs):
+        return dict({"weights":self.stack, "x":self._getXVal(), "bins":self.bins, "histtype":'stepfilled', "color":self.colors, "stacked":True, "label":self.fancyNames, 'align':self.align, }, **kwargs)
 
     def applyPatches(self, plot, patches):
         for p, ec in zip(patches, self.edgecolors):

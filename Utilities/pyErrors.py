@@ -1,26 +1,33 @@
 import ROOT as r
-import numpy as np
-from matplotlib import colors
+from matplotlib.collections import PatchCollection
+from matplotlib.patches import Rectangle
+from matplotlib import colors as clr
 
-class pyHist:
+class pyErrors:
     def __init__(self, name, rootHist, color, isTH1=True, isMult=False):
         self.name = name
         self.x = list()
         self.y = list()
         self.yerr = list()
         self.xerr = list()
-        self.underflow = 0.
-        self.overflow = 0.
         self.hist = rootHist.Clone()
         self.color = color
-        
-        if '\\' in self.name:
-                self.name = r'$%s$' % self.name
-            
+        self.edgecolor = self._darkenColor(self.color)
+        # self.align = 'left' if isMult else "mid"
+        self.align = 'mid'
         if isTH1:
             self.setupTH1(rootHist, isMult)
         else:
             self.setupTGraph(rootHist, isMult)
+
+        self.bottom = [y - yerr for y, yerr in zip(self.y, self.yerr)]
+        self.errors = [2*yerr for yerr in self.yerr]
+        self.bins   = [x - xerr for x, xerr in zip(self.x, self.xerr)]
+        self.bins.append(self.x[-1] + self.xerr[-1])
+        
+        print self.errors
+        print self.bins
+        print self.bottom
         
     def setupTH1(self, rootHist, isMult):
         width = rootHist.GetBinWidth(1) if isMult else 0.0
@@ -37,6 +44,7 @@ class pyHist:
         self.y[-1] += self.overflow
         self.xerr = [rootHist.GetBinWidth(1)/2]*len(self.x)
 
+
     def setupTGraph(self, rootGraph, isMult):
         width = rootGraph.GetErrorX(0) if isMult else 0.0
         x, y = r.Double(0), r.Double(0)
@@ -46,11 +54,12 @@ class pyHist:
             self.y.append(float(y))
             self.yerr.append(rootGraph.GetErrorY(i))
             self.xerr.append(rootGraph.GetErrorX(i))
-        
-    def getRHist(self):
-        return self.hist
 
-        
+    def _darkenColor(self, color):
+        cvec = clr.to_rgba(color)
+        dark = 0.3
+        return tuple([i - dark if i > dark else 0.0 for i in cvec])
+
     def getInputs(self, **kwargs):
-        return dict({"x":self.x, "xerr":self.xerr, "y":self.y, "yerr":self.yerr, "ecolor":self.color, "color":self.color, "barsabove":True, "label":self.name,},  **kwargs)
+        return dict({"weights":self.errors, "x":self.x, "bins":self.bins, 'bottom':self.bottom, "histtype":'stepfilled', "color":self.color, 'align':self.align, }, **kwargs)
 

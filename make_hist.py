@@ -7,6 +7,7 @@ from Utilities.InfoGetter import InfoGetter
 import Utilities.configHelper as config
 from Utilities.pyHist import pyHist
 from Utilities.pyStack import pyStack
+from Utilities.pyErrors import pyErrors
 from Utilities.pyPad import pyPad
 from Utilities.LogFile import LogFile
 
@@ -90,6 +91,7 @@ for histName in info.getListOfHists():
         signal = None
         data = None
         ratio = None
+        band = None
         
         groupHists = config.getNormedHistos(inFile, info, histName, chan)
         if not groupHists or groupHists.values()[0].InheritsFrom("TH2"):
@@ -114,7 +116,9 @@ for histName in info.getListOfHists():
         # ratio
         if signal:
             divide = r.TGraphAsymmErrors(signal.getRHist(), stacker.getRHist(), "pois")
+            stack_divide = r.TGraphAsymmErrors(stacker.getRHist(), stacker.getRHist(), "pois")
             ratio = pyHist("Ratio", divide, "black", isTH1=False, isMult=isDcrt)
+            band = pyErrors("Ratio", stack_divide, "plum", isTH1=False, isMult=isDcrt)
                                                         
         pad = pyPad(plt, ratio!=None)
         
@@ -125,13 +129,14 @@ for histName in info.getListOfHists():
             pad.getMainPad().errorbar(**signal.getInputs(fmt='o', markersize=4))
         if data:
             pad.getMainPad().errorbar(**data.getInputs(fmt='o', markersize=4))
-
-        pad.setLegend()
-        pad.axisSetup(info.getPlotSpec(histName))
-
         if ratio:
             pad.getSubMainPad().errorbar(**ratio.getInputs(fmt='o', markersize=4))
+            pad.getSubMainPad().hist(**band.getInputs(hatch='x', alpha=0.5))
 
+        pad.setLegend()
+        pad.axisSetup(info.getPlotSpec(histName), stacker.getRange())
+
+        
         fig = plt.gcf()
         fig.set_size_inches(8,8)
 

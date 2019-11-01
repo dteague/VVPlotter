@@ -44,22 +44,28 @@ class pyPad:
         else:
             return self.up
 
-    def axisSetup(self, info):
+    def axisSetup(self, info, defRange):
         axis = self.getXaxis()
+
+        # Defaults
+        self.up.set_ylim(bottom=0.)
+        self.up.set_ylabel("Events/bin")
+        axis.set_xlim(defRange)
+        self.rightAlignLabel(self.up.get_yaxis(), True)
+        self.rightAlignLabel(axis.get_xaxis())
+        if self.down:
+            self.down.set_ylabel("Signal/MC")
+            self.down.set_ylim(top=2.0, bottom=0)
+
+        # user specified
         for key, val in info.iteritems():
             try:
                 getattr(axis, key)(val)
             except:
                 pass
-        self.rightAlignLabel(axis.get_xaxis())
         
-        self.up.set_ylim(bottom=0.001)
-        self.up.set_ylabel("Events/bin")
-        self.rightAlignLabel(self.up.get_yaxis(), True)
-        if self.down:
-            self.down.set_ylabel("Signal/MC")
-            self.down.set_ylim(bottom=0)
-
+        
+ 
     def rightAlignLabel(self, axis, isYaxis=False):
         label = axis.get_label()
         x_lab_pos, y_lab_pos = label.get_position()
