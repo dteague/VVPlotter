@@ -21,7 +21,6 @@ class InfoGetter:
         self.member2GroupMap = self.setupMember2GroupMap()
         self.listOfHists = self.setupListOfHists(inFile)
         self.sumweights = self.setupSumWeight(inFile)
-        self.objectStyle = self.readAllInfo("style.py")
         self.plotSpecs = self.readAllInfo("plotInfo.py")
         self.lumi = 35900 #default
         
@@ -138,12 +137,6 @@ class InfoGetter:
 
     def getStyle(self, group):
         return self.groupInfo[group]['Style']
-
-    def getStyleInit(self, typeName):
-        return self.objectStyle[typeName]['Init']
-
-    def getStyleInfo(self, typeName):
-        return self.objectStyle[typeName]['Attributes']
 
     def getLumi(self):
         return self.lumi

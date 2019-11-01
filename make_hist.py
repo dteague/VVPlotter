@@ -4,7 +4,6 @@ import os
 import ROOT as r
 
 from Utilities.InfoGetter import InfoGetter
-import Utilities.StyleHelper as style
 import Utilities.configHelper as config
 from Utilities.pyHist import pyHist
 from Utilities.pyStack import pyStack
