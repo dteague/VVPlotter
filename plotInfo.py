@@ -1,70 +1,116 @@
-info = {
-    "GetXaxis.SetTitle" : {
-        "HT" :             "H_{T} (GeV)",
-        "Met" :            "p_{T}^{miss} (GeV)",
-        "centrality":      "Centrality",
-        "sphericity" :     "sphericity",
-        "nbjet" :          "N_{b}",
-        "njet" :           "N_{jets}",
-        "nleps" :          "N_{leps}", 
-        "ptl1" :           "p_{T}(\ell_{1})\ (GeV)",
-        "ptl2" :           "p_{T}(\ell_{2})\ (GeV)",
-        "ptj1" :           "p_{T}(j_{1}) (GeV)",
-        "ptj2" :           "p_{T}(j_{2}) (GeV)",
-        "ptj3" :           "p_{T}(j_{3}) (GeV)",
-        "etaj1" :          "#eta(j_{1})",
-        "etaj2" :          "#eta(j_{2})",
-        "etaj3" :          "#eta(j_{3})",
-        "ptb1" :           "p_{T}(b_{1}) (GeV)",
-        "ptb2" :           "p_{T}(b_{2}) (GeV)",
-        "ptb3" :           "p_{T}(b_{3}) (GeV)",
-        "etab1" :          "#eta(b_{1})",
-        "etab2" :          "#eta(b_{2})",
-        "etab3" :          "#eta(b_{3})",
-        "ptj1OverHT" :     "p_{T}(j_{1}) / H_{T}",
-        "ptb1OverHT" :     "p_{T}(b_{1}) / H_{T}",
-        "dphi_l1j1"  :     "\Delta\phi(\ell_{1}, j_{1})",
-        "dphi_l1j2"  :     "\Delta\phi(\ell_{1}, j_{2})",
-        "dphi_l1j3"  :     "\Delta\phi(\ell_{1}, j_{3})",
-        
-    },
-    
-    "Rebin" : {
-        "centrality" : 4,
-        "ptl1" : 4,
-        "sphericity" : 4,
-        "ptj1":   10,
-        "ptj2":   10,
-        "ptj3":   10,
-        "ptb1":   8,
-        "ptb2":   8,
-        "ptb3":   4,
-        "ptj1OverHT" : 4,
-        "ptb1OverHT" : 4,
-        "dphi_l1j1" : 25,
-        "dphi_l1j2" : 25,
-        "dphi_l1j3" : 25,
-        "etaj1" :     20,
-        "etaj2" :     20,
-        "etaj3" :     20,
-        "etab1" :     20,
-        "etab2" :     20,
-        "etab3" :     20,
-    },
-    
-    "GetXaxis.SetRangeUser" : {
-        "nbjet" : (0, 8),
-        "njet" : (0, 12),
-        "nleps" : (0, 5),
-        "ptl2" :  (0, 200),
-        
-        "ptj1" :  (0, 800),
-        "ptj2" :  (0, 450),
-        "ptj3" :  (0, 300),
-        "ptb1" :  (0, 600),
-        "ptb2" :  (0, 300),
-        "ptb3" :  (0, 200),
-    }
+# -*- coding: utf-8 -*-
 
-    
+info = {
+    "HT" : {
+        "set_xlabel": "$H_{T}$ (GeV)",
+    },
+    "Met" : {
+        "set_xlabel": "$p_{T}^{miss}$ (GeV)",
+    },
+    "centrality": {
+        "Rebin" :  4,
+        "set_xlabel": "Centrality",
+    },
+    "sphericity" : {
+        "Rebin" :  4,
+        "set_xlabel": "sphericity",
+    },
+    "nbjet" : {
+        "set_xlim" :  (0, 8),
+        "set_xlabel": "$N_{b}$",
+        "isMultiplicity" : True,
+    },
+    "njet" : {
+        "set_xlim" :  (0, 12),
+        "set_xlabel": '$N_{jets}$',
+        "isMultiplicity" : True,
+    },
+    "nleps" : {
+        "set_xlim" :  (0, 5),
+        "set_xlabel": '$N_{leps}$',
+        "isMultiplicity" : True,
+    },
+    "ptl1" : {
+        "Rebin" :  4,
+        "set_xlim" :   (0, 400),
+        "set_xlabel": "$p_{T}(\ell_{1})$ (GeV)",
+    },
+    "ptl2" : {
+        "set_xlim" :   (0, 150),
+        "set_xlabel": "$p_{T}(\ell_{2})$ (GeV)",
+    },
+    "ptj1" : {
+        "Rebin" : 10,
+        "set_xlim" :   (0, 800),
+        "set_xlabel": "$p_{T}(j_{1})$ (GeV)",
+    },
+    "ptj2" : {
+        "Rebin" : 10,
+        "set_xlim" :   (0, 450),
+        "set_xlabel": "$p_{T}(j_{2})$ (GeV)",
+    },
+    "ptj3" : {
+        "Rebin" : 10,
+        "set_xlim" :   (0, 300),
+        "set_xlabel": "$p_{T}(j_{3})$ (GeV)",
+    },
+    "etaj1" : {
+        "Rebin" :      20,
+        "set_xlabel": "η(j_{1})",
+    },
+    "etaj2" : {
+        "Rebin" :      20,
+        "set_xlabel": "η(j_{2})",
+    },
+    "etaj3" : {
+        "Rebin" :      20,
+        "set_xlabel": "η(j_{3})",
+    },
+    "ptb1" : {
+        "Rebin" : 8,
+        "set_xlim" :   (0, 600),
+        "set_xlabel": "p_{T}(b_{1}) (GeV)",
+    },
+    "ptb2" : {
+        "Rebin" : 8,
+        "set_xlim" :   (0, 300),
+        "set_xlabel": "p_{T}(b_{2}) (GeV)",
+    },
+    "ptb3" : {
+        "Rebin" : 4,
+        "set_xlim" :   (0, 200),
+        "set_xlabel": "p_{T}(b_{3}) (GeV)",
+    },
+    "etab1" : {
+        "Rebin" :      20,
+        "set_xlabel": "$η(b_{1})$",
+    },
+    "etab2" : {
+        "Rebin" :      20,
+        "set_xlabel": "$η(b_{2})$",
+    },
+    "etab3" : {
+        "Rebin" :      20,
+        "set_xlabel": "$η(b_{3})$",
+    },
+    "ptj1OverHT" : {
+        "Rebin" :  4,
+        "set_xlabel": "$p_{T}(j_{1})$ / H_{T}",
+    },
+    "ptb1OverHT" : {
+        "Rebin" :  4,
+        "set_xlabel": "$p_{T}(b_{1})$ / H_{T}",
+    },
+    "dphi_l1j1"  : {
+        "Rebin" :  25,
+        "set_xlabel": "$Δφ(ℓ_{1}, j_{1})$",
+    },
+    "dphi_l1j2"  : {
+        "Rebin" :  25,
+        "set_xlabel": "$Δφ(ℓ_{1}, j_{2})$",
+    },
+    "dphi_l1j3"  : {
+        "Rebin" :  25,
+        "set_xlabel": "$Δφ(ℓ_{1}, j_{3})$",
+    },
 }

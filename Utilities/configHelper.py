@@ -32,21 +32,6 @@ def getComLineArgs():
     parser.add_argument("--autoScale", type=float, default=-1.,
                         help="Ignore Max argument and scale max to ratio given")
     
-    
-    # do nothing
-    
-    # parser.add_argument("--no_overflow", action='store_true',
-    #                     help="No overflow bin")
-    # parser.add_argument("-u", "--uncertainties", type=str, default="all",
-    #                     choices=["all", "stat", "scale", "none"],
-    #                     help="Include error bands for specfied uncertainties")
-    # parser.add_argument("--nostack", action='store_true',
-    #                     help="Don't stack hists")
-    
-    # parser.add_argument("--no_html", action='store_true',
-    #                     help="Don't copy plot pdfs to website")
-    # parser.add_argument("--no_data", action='store_true',
-    #                     help="Plot only Monte Carlo")
     return parser.parse_args()
 
 
@@ -63,6 +48,8 @@ def getNormedHistos(inFile, info, histName, chan):
         if hist.Integral() <= 0:
             inFile.cd()
             continue
+        if "Rebin" in info.getPlotSpec(histName):
+            hist.Rebin(info.getPlotSpec(histName)["Rebin"])
         hist.Scale(info.getXSec(sample) / info.getSumweight(sample))
         if group not in groupHists.keys():
             groupHists[group] = hist.Clone()
@@ -89,9 +76,12 @@ def addOverflow(inHist, highRange=None):
         extra = inHist.GetBinContent(binMax+1)
     inHist.SetBinContent(binMax, inHist.GetBinContent(binMax) + extra)
     
-def getDrawOrder(groupHists, drawObj, info):
+def getDrawOrder(groupHists, drawObj, info, ex=[]):
+    """Might rename: sorts histograms based on integral and returns list
+       of pairs with the first the group name and the second the root hist"""
     drawTmp = list()
     for key in drawObj:
+        if key in ex: continue
         try:
             drawTmp.append((groupHists[key].Integral(), key))
         except:
@@ -125,3 +115,30 @@ def checkOrCreateDir(path):
     if not os.path.exists(path):
         os.makedirs(path)
 
+def printDrawObjAndExit(info):
+    """Automatically give you drawObjs dictionary for you. Only works if drawObj=None"""
+    print("you have no list of drawObjs, paste this into the code to continue\n")
+    groups = info.getGroups()
+    print("drawObj = {")
+    for group in groups:
+        print( '           %-12s: "%s",' % ('"'+group+'"', info.getStyle(group)))
+    print("}")
+    exit()
+
+
+def setupPathAndDir(analysis, drawStyle, path):
+    """Setup HTML directory area and return path made"""
+    extraPath = time.strftime("%Y_%m_%d")
+    if path:
+        extraPath = path+'/'+extraPath
+
+    if 'hep.wisc.edu' in os.environ['HOSTNAME']:
+        basePath = '%s/public_html' % (os.environ['HOME'])
+    elif 'uwlogin' in os.environ['HOSTNAME'] or 'lxplus' in os.environ['HOSTNAME']:
+        basePath = '/eos/home-{0:1.1s}/{0}/www'.format(os.environ['USER'])
+    basePath += '/%s/%s/%s_%s' % ('PlottingResults', analysis, extraPath, drawStyle)
+
+    checkOrCreateDir('%s' % (basePath))
+    checkOrCreateDir('%s/plots' % (basePath))
+    checkOrCreateDir('%s/logs' % (basePath))
+    return basePath
