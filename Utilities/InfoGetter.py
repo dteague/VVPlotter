@@ -22,7 +22,7 @@ class InfoGetter:
         self.listOfHists = self.setupListOfHists(inFile)
         self.sumweights = self.setupSumWeight(inFile)
         self.objectStyle = self.readAllInfo("style.py")
-        self.plotSpecs = self.setupGraphSpecs(self.readAllInfo("plotInfo.py"))
+        self.plotSpecs = self.readAllInfo("plotInfo.py")
         self.lumi = 35900 #default
         
         # if os.path.isfile("%s/PlotObjects/%s/%s.json" % (adm_path, analysis, selection)):
@@ -112,6 +112,10 @@ class InfoGetter:
             inFile.cd()
         return return_dict
 
+    def setDrawStyle(self, drawStyle):
+        if drawStyle == "compare":
+            self.lumi = -1
+
     #####################################
     #   ____      _   _                 #
     #  / ___| ___| |_| |_ ___ _ __ ___  #
@@ -168,6 +172,13 @@ class InfoGetter:
     def isInPlotSpec(self, histName):
         return histName in self.plotSpecs
             
+    def isDiscreteGraph(self, histName):
+        if "isMultiplicity" in self.plotSpecs[histName]:
+            return self.plotSpecs[histName]["isMultiplicity"]
+        else:
+            return False
+                                                         
+
 
 
     

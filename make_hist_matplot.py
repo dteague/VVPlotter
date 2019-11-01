@@ -9,6 +9,8 @@ import Utilities.configHelper as config
 from Utilities.pyHist import pyHist
 from Utilities.pyStack import pyStack
 from Utilities.pyPad import pyPad
+from Utilities.LogFile import LogFile
+
 from Utilities.makeSimpleHtml import writeHTML
 import numpy as np
 import matplotlib.pyplot as plt
@@ -27,7 +29,6 @@ font = {'family' : 'sans',
 
 plt.rc('font', **font)
 
-
 SMALL_SIZE = 12
 MEDIUM_SIZE = 16
 plt.rc('font', size=SMALL_SIZE) 
@@ -36,8 +37,6 @@ plt.rc('axes', labelsize=MEDIUM_SIZE)
 plt.rc('xtick', labelsize=MEDIUM_SIZE) 
 plt.rc('ytick', labelsize=MEDIUM_SIZE) 
 plt.rc('legend', fontsize=SMALL_SIZE) 
-
-
 
 # Setup
 args = config.getComLineArgs()
@@ -66,20 +65,11 @@ if len(anaSel) == 1:
     anaSel.append('')
 
 info = InfoGetter(anaSel[0], anaSel[1], inFile)
-if args.drawStyle == 'compare':
-    info.setLumi(-1)
-else:
-    info.setLumi(args.lumi*1000)
+info.setLumi(args.lumi*1000)
+info.setDrawStyle(args.drawStyle)
 
 if not drawObj:
-    print("you have no list of drawObjs, paste this into the code to continue\n")
-    groups = info.getGroups()
-    print("drawObj = {")
-    for group in groups:
-        print( '           %-12s: "%s",' % ('"'+group+'"', info.getStyle(group)))
-    print("}")
-    exit()
-
+    config.printDrawObjAndExit(info)
 
 if args.signal and args.signal not in drawObj:
     print( "signal not in list of groups!")
@@ -88,19 +78,14 @@ if args.signal and args.signal not in drawObj:
 signalName = args.signal
 channels = args.channels.split(',')
 
-# HTML setup
-extraPath = time.strftime("%Y_%m_%d")
-if args.path:
-    extraPath = args.path+'/'+extraPath
 
-basePath = '/eos/home-{0:1.1s}/{0}/www'.format(os.environ['USER'])
-basePath += '/%s/%s/%s_%s' % ('PlottingResults', args.analysis, extraPath, args.drawStyle)
-config.checkOrCreateDir('%s' % (basePath))
-config.checkOrCreateDir('%s/plots' % (basePath))
-config.checkOrCreateDir('%s/logs' % (basePath))
+
+basePath = config.setupPathAndDir(args.analysis, args.drawStyle, args.path)
 
 for histName in info.getListOfHists():
     if not info.isInPlotSpec(histName): continue
+    print "Processing %s" % histName
+    isDcrt = info.isDiscreteGraph(histName)
     
     for chan in channels:
         signal = None
@@ -114,23 +99,23 @@ for histName in info.getListOfHists():
         exclude = []
         # signal
         if signalName in groupHists:
-            signal = pyHist(info.getLegendName(signalName), groupHists[signalName], drawObj[signalName])
+            signal = pyHist(info.getLegendName(signalName), groupHists[signalName], drawObj[signalName], isMult=isDcrt)
             exclude.append(signalName)
                     
         # data
         if False:
-            data = pyHist("Data", groupHists['data'], 'black')
+            data = pyHist("Data", groupHists['data'], 'black', isMult=isDcrt)
             exclude.append('data')
                     
         drawOrder = config.getDrawOrder(groupHists, drawObj, info, ex=[signalName])
-        stacker = pyStack(drawOrder)
+        stacker = pyStack(drawOrder, isMult=isDcrt)
         stacker.setColors(drawObj)
         stacker.setLegendNames(info)
 
         # ratio
         if signal:
             divide = r.TGraphAsymmErrors(signal.getRHist(), stacker.getRHist(), "pois")
-            ratio = pyHist("Ratio", divide, "black", isTH1=False)
+            ratio = pyHist("Ratio", divide, "black", isTH1=False, isMult=isDcrt)
                                                         
         pad = pyPad(plt, ratio!=None)
         
@@ -138,25 +123,39 @@ for histName in info.getListOfHists():
         stacker.applyPatches(plt, patches)
 
         if signal:
-            pad.getMainPad().errorbar(**signal.getInputs())
+            pad.getMainPad().errorbar(**signal.getInputs(fmt='o', markersize=4))
         if data:
-            pad.getMainPad().errorbar(**data.getInputs())
+            pad.getMainPad().errorbar(**data.getInputs(fmt='o', markersize=4))
 
         pad.setLegend()
         pad.axisSetup(info.getPlotSpec(histName))
 
         if ratio:
-            pad.getSubMainPad().errorbar(**ratio.getInputs())
+            pad.getSubMainPad().errorbar(**ratio.getInputs(fmt='o', markersize=4))
 
         fig = plt.gcf()
         fig.set_size_inches(8,8)
-                
+
         plt.savefig("%s/plots/%s.png" % (basePath, histName), format="png", bbox_inches='tight')
         plt.savefig("%s/plots/%s.pdf" % (basePath, histName), format="pdf", bbox_inches='tight')
-        plt.clf()
-        plt.cla()
         plt.close()
 
+        # setup log file
+        logger = LogFile(histName, info, basePath+"/logs")
+        logger.addMetaInfo(callTime, command)
+        # logger.addMC(groupHists, drawObj.keys())
+        # if signal:
+        #     logger.addSignal(signal, signalName)
+        logger.writeOut()
+
+        
 
 writeHTML(basePath, args.analysis)
+userName = os.environ['USER']
+htmlPath = basePath[basePath.index(userName)+len(userName)+1:]
+if 'hep.wisc.edu' in os.environ['HOSTNAME']:
+    print "https://www.hep.wisc.edu/~{0}/{1}".format(os.environ['USER'], htmlPath[12:])
+else:
+    print "https://{0}.web.cern.ch/{0}/{1}".format(os.environ['USER'], htmlPath[4:])    
+
 

@@ -3,7 +3,7 @@ from matplotlib import colors as clr
 import numpy as np
 
 class pyStack():
-    def __init__(self, drawOrder):
+    def __init__(self, drawOrder, isMult=False):
         self.stack = list()
         self.colors = list()
         self.edgecolors = list()
@@ -12,7 +12,7 @@ class pyStack():
         self.bins = None
         self.hists = list()
         self.rHistTotal = None
-        self.align = 'left'
+        self.align = 'left' if isMult else "mid"
         self.title = None
         
         for name, hist in drawOrder:
@@ -56,12 +56,14 @@ class pyStack():
         return self.rHistTotal
 
                 
-    def getXVal(self):
+    def _getXVal(self):
         return [self.bins[:-1]]*len(self.stack)
 
+    
+    
         
     def getInputs(self):
-        return {"weights":self.stack, "x":self.getXVal(), "bins":self.bins, "histtype":'stepfilled', "color":self.colors, "stacked":True, "label":self.fancyNames, 'align':self.align}
+        return {"weights":self.stack, "x":self._getXVal(), "bins":self.bins, "histtype":'stepfilled', "color":self.colors, "stacked":True, "label":self.fancyNames, 'align':self.align}
 
     def applyPatches(self, plot, patches):
         for p, ec in zip(patches, self.edgecolors):

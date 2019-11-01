@@ -25,7 +25,8 @@ class LogFile:
         self.hists = [None, None, None, None]
         self.callTime = ""
         self.command = ""
-
+        self.name = name
+        
     def getBackground(self):
         return self.hists[BKG]
 
@@ -72,6 +73,7 @@ class LogFile:
         self.output.write('-'*80 + '\n')
         self.output.write("Script called at %s \n" % self.callTime)
         self.output.write("The command was: %s \n" % self.command)
+        self.output.write("The name of this Histogram is: %s \n" % self.name)
         self.output.write('-'*80 + '\n')
         self.output.write("Selection: %s/%s\n" % (self.info.getAnalysis(), self.info.getSelection()))
         self.output.write("Luminosity: %0.2f fb^{-1}\n" % (self.info.getLumi()/1000))
@@ -82,7 +84,8 @@ class LogFile:
         else:
             self.output.write('\n' + self.plotTable.get_string() + '\n'*2)
 
-        self.output.write("Total sum of Monte Carlo: %0.2f +/- %0.2f \n" % sl(self.getIntErr(self.getTotalMC())))
+        if self.getTotalMC():
+            self.output.write("Total sum of Monte Carlo: %0.2f +/- %0.2f \n" % sl(self.getIntErr(self.getTotalMC())))
         if self.getSignal():
             self.output.write("Total sum of background Monte Carlo: %0.2f +/- %0.2f \n" % sl(self.getIntErr(self.getBackground())))
             self.output.write("Ratio S/(S+B): %0.2f +/- %0.2f \n" % sl(self.getSigBkgRatio()))
