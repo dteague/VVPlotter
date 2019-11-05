@@ -75,7 +75,9 @@ class InfoGetter:
         return_map = dict()
         for key, val in self.groupInfo.iteritems():
             for bkg in val['Members']:
-                return_map[bkg] = key
+                if bkg not in return_map:
+                    return_map[bkg] = list()
+                return_map[bkg].append(key)
         return return_map
 
     def setupGraphSpecs(self, input):
@@ -157,8 +159,8 @@ class InfoGetter:
         return self.plotSpecs[histName]
 
     def getUpBinUser(self, histName):
-        if "GetXaxis.SetRangeUser" in self.plotSpecs[histName]:
-            return self.plotSpecs[histName]["GetXaxis.SetRangeUser"][1]
+        if "set_xlim" in self.plotSpecs[histName]:
+            return self.plotSpecs[histName]["set_xlim"][1]
         else:
             return None
 

@@ -9,8 +9,6 @@ class pyHist:
         self.y = list()
         self.yerr = list()
         self.xerr = list()
-        self.underflow = 0.
-        self.overflow = 0.
         self.hist = rootHist.Clone()
         self.color = color
         
@@ -25,16 +23,12 @@ class pyHist:
     def setupTH1(self, rootHist, isMult):
         width = rootHist.GetBinWidth(1) if isMult else 0.0
         
-        self.underflow = rootHist.GetBinContent(0)
-        self.overflow = rootHist.GetBinContent(rootHist.GetNbinsX()+1)
         for i in range(1, rootHist.GetNbinsX()+1):
             if rootHist.GetBinContent(i) <= 0:
                 continue
             self.x.append(rootHist.GetBinCenter(i)-width/2)
             self.y.append(rootHist.GetBinContent(i))
             self.yerr.append(rootHist.GetBinError(i))
-        self.y[0] += self.underflow
-        self.y[-1] += self.overflow
         self.xerr = [rootHist.GetBinWidth(1)/2]*len(self.x)
 
     def setupTGraph(self, rootGraph, isMult):

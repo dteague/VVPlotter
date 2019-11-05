@@ -31,12 +31,13 @@ info = {
         "isMultiplicity" : True,
     },
     "ptl1" : {
-        "Rebin" :  4,
+        "Rebin" :  8,
         "set_xlim" :   (0, 400),
         "set_xlabel": "$p_{T}(\ell_{1})$ (GeV)",
     },
     "ptl2" : {
-        "set_xlim" :   (0, 150),
+        "Rebin" :  4,
+        "set_xlim" :   (0, 80),
         "set_xlabel": "$p_{T}(\ell_{2})$ (GeV)",
     },
     "ptj1" : {

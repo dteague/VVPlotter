@@ -44,17 +44,19 @@ def getNormedHistos(inFile, info, histName, chan):
         sample = dir.GetName()
         r.gDirectory.cd(sample)
         hist = r.gDirectory.Get("%s_%s" % (histName, chan))
-        group = info.getGroupName(sample)
+        groups = info.getGroupName(sample)
         if hist.Integral() <= 0:
             inFile.cd()
             continue
+        addOverflow(hist, info.getUpBinUser(histName))
         if "Rebin" in info.getPlotSpec(histName):
             hist.Rebin(info.getPlotSpec(histName)["Rebin"])
         hist.Scale(info.getXSec(sample) / info.getSumweight(sample))
-        if group not in groupHists.keys():
-            groupHists[group] = hist.Clone()
-        else:
-            groupHists[group].Add(hist)
+        for group in groups:
+            if group not in groupHists.keys():
+                groupHists[group] = hist.Clone()
+            else:
+                groupHists[group].Add(hist)
         inFile.cd()
     for name, hist in groupHists.iteritems():
         if info.getLumi() < 0:
@@ -65,16 +67,18 @@ def getNormedHistos(inFile, info, histName, chan):
     return groupHists
 
 def addOverflow(inHist, highRange=None):
-    binMax = inHist.GetNbinsX()
+    lowbin = inHist.GetNbinsX()
+    highbin = lowbin + 1
     
     if highRange:
-        bin = inHist.FindBin(highRange)
-        if highRange != inHist.GetXaxis().GetBinLowEdge(bin): bin += 1
-        extra = inHist.Integral(bin, binMax+1)
-        binMax = bin-1
+        lowbin = inHist.FindBin(highRange)+1
+        if highRange != inHist.GetXaxis().GetBinLowEdge(lowbin): lowbin -= 1
+        extra = inHist.Integral(lowbin, highbin)
     else:
-        extra = inHist.GetBinContent(binMax+1)
-    inHist.SetBinContent(binMax, inHist.GetBinContent(binMax) + extra)
+        extra = inHist.GetBinContent(highbin)
+    inHist.SetBinContent(lowbin-1, inHist.GetBinContent(lowbin-1) + extra)
+    for i in range(lowbin, highbin):
+        inHist.SetBinContent(i, 0)
     
 def getDrawOrder(groupHists, drawObj, info, ex=[]):
     """Might rename: sorts histograms based on integral and returns list

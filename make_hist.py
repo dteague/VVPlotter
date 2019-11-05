@@ -48,7 +48,7 @@ drawObj = {
            "ttw"       : "darkgreen",
            "xg"        : "indigo",
            "tth"       : "slategray",
-           "tttt_line" : "red",
+           "tttt"      : "red",
 
           # "ttt"       : "fill-hotpink",
            # "2017"      : "fill-green",
@@ -88,11 +88,8 @@ for histName in info.getListOfHists():
     isDcrt = info.isDiscreteGraph(histName)
     
     for chan in channels:
-        signal = None
-        data = None
-        ratio = None
-        band = None
-        
+        signal, data, ratio, band, error = None, None, None, None, None
+                                
         groupHists = config.getNormedHistos(inFile, info, histName, chan)
         if not groupHists or groupHists.values()[0].InheritsFrom("TH2"):
             continue
@@ -102,7 +99,7 @@ for histName in info.getListOfHists():
         if signalName in groupHists:
             signal = pyHist(info.getLegendName(signalName), groupHists[signalName], drawObj[signalName], isMult=isDcrt)
             exclude.append(signalName)
-                    
+
         # data
         if False:
             data = pyHist("Data", groupHists['data'], 'black', isMult=isDcrt)
@@ -112,7 +109,8 @@ for histName in info.getListOfHists():
         stacker = pyStack(drawOrder, isMult=isDcrt)
         stacker.setColors(drawObj)
         stacker.setLegendNames(info)
-
+        error = pyErrors("Stat Errors", stacker.getRHist(), "plum", isMult=isDcrt)
+        
         # ratio
         if signal:
             divide = r.TGraphAsymmErrors(signal.getRHist(), stacker.getRHist(), "pois")
@@ -129,9 +127,11 @@ for histName in info.getListOfHists():
             pad.getMainPad().errorbar(**signal.getInputs(fmt='o', markersize=4))
         if data:
             pad.getMainPad().errorbar(**data.getInputs(fmt='o', markersize=4))
+        if error:
+            pad.getMainPad().hist(**error.getInputs(hatch='//', alpha=0.4,label="Stat Error"))
         if ratio:
             pad.getSubMainPad().errorbar(**ratio.getInputs(fmt='o', markersize=4))
-            pad.getSubMainPad().hist(**band.getInputs(hatch='x', alpha=0.5))
+            pad.getSubMainPad().hist(**band.getInputs(hatch='//', alpha=0.4,))
 
         pad.setLegend()
         pad.axisSetup(info.getPlotSpec(histName), stacker.getRange())
@@ -147,9 +147,9 @@ for histName in info.getListOfHists():
         # setup log file
         logger = LogFile(histName, info, basePath+"/logs")
         logger.addMetaInfo(callTime, command)
-        # logger.addMC(groupHists, drawObj.keys())
-        # if signal:
-        #     logger.addSignal(signal, signalName)
+        logger.addMC(drawOrder)
+        if signal:
+            logger.addSignal(groupHists[signalName], signalName)
         logger.writeOut()
 
         

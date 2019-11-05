@@ -25,23 +25,16 @@ class pyErrors:
         self.bins   = [x - xerr for x, xerr in zip(self.x, self.xerr)]
         self.bins.append(self.x[-1] + self.xerr[-1])
         
-        print self.errors
-        print self.bins
-        print self.bottom
-        
+                        
     def setupTH1(self, rootHist, isMult):
         width = rootHist.GetBinWidth(1) if isMult else 0.0
         
-        self.underflow = rootHist.GetBinContent(0)
-        self.overflow = rootHist.GetBinContent(rootHist.GetNbinsX()+1)
         for i in range(1, rootHist.GetNbinsX()+1):
             if rootHist.GetBinContent(i) <= 0:
                 continue
             self.x.append(rootHist.GetBinCenter(i)-width/2)
             self.y.append(rootHist.GetBinContent(i))
             self.yerr.append(rootHist.GetBinError(i))
-        self.y[0] += self.underflow
-        self.y[-1] += self.overflow
         self.xerr = [rootHist.GetBinWidth(1)/2]*len(self.x)
 
 
@@ -61,5 +54,5 @@ class pyErrors:
         return tuple([i - dark if i > dark else 0.0 for i in cvec])
 
     def getInputs(self, **kwargs):
-        return dict({"weights":self.errors, "x":self.x, "bins":self.bins, 'bottom':self.bottom, "histtype":'stepfilled', "color":self.color, 'align':self.align, }, **kwargs)
+        return dict({"weights":self.errors, "x":self.x, "bins":self.bins, 'bottom':self.bottom, "histtype":'stepfilled', "color":self.color, 'align':self.align, 'stacked':True}, **kwargs)
 

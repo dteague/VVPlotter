@@ -39,11 +39,10 @@ class LogFile:
     def getData(self):
         return self.hists[DATA]
         
-    def addMC(self, groupHists, drawOrder):
-        for groupName in [i for i in drawOrder[::-1] if i in groupHists]:
-            hist = groupHists[groupName]
+    def addMC(self, drawOrder):
+        for name, hist  in drawOrder:
             wEvents, error = self.getIntErr(hist)
-            self.plotTable.add_row(sl((groupName, wEvents, error)))
+            self.plotTable.add_row(sl((name, wEvents, error)))
             self.addHist(hist, BKG)
         self.addHist(self.getBackground(), TOTAL)
             

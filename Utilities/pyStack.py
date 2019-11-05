@@ -23,8 +23,6 @@ class pyStack():
             tmp = list()
             for i in range(1, hist.GetNbinsX()+1):
                 tmp.append(hist.GetBinContent(i))
-            tmp[0] += hist.GetBinContent(0)
-            tmp[-1] += hist.GetBinContent(hist.GetNbinsX()+1)
             self.stack.append(tmp)
             if not self.rHistTotal:
                 self.rHistTotal = hist.Clone(self.title)
