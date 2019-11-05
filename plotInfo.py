@@ -37,7 +37,7 @@ info = {
     },
     "ptl2" : {
         "Rebin" :  4,
-        "set_xlim" :   (0, 80),
+        "set_xlim" :   (0, 85),
         "set_xlabel": "$p_{T}(\ell_{2})$ (GeV)",
     },
     "ptj1" : {

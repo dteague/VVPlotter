@@ -48,9 +48,10 @@ def getNormedHistos(inFile, info, histName, chan):
         if hist.Integral() <= 0:
             inFile.cd()
             continue
-        addOverflow(hist, info.getUpBinUser(histName))
+        
         if "Rebin" in info.getPlotSpec(histName):
             hist.Rebin(info.getPlotSpec(histName)["Rebin"])
+        addOverflow(hist, info.getUpBinUser(histName))
         hist.Scale(info.getXSec(sample) / info.getSumweight(sample))
         for group in groups:
             if group not in groupHists.keys():
@@ -71,13 +72,14 @@ def addOverflow(inHist, highRange=None):
     highbin = lowbin + 1
     
     if highRange:
-        lowbin = inHist.FindBin(highRange)+1
-        if highRange != inHist.GetXaxis().GetBinLowEdge(lowbin): lowbin -= 1
-        extra = inHist.Integral(lowbin, highbin)
+        lowbin = inHist.FindBin(highRange)
+        if highRange == inHist.GetXaxis().GetBinLowEdge(lowbin): lowbin -= 1
+        extra = inHist.Integral(lowbin+1, highbin)
     else:
         extra = inHist.GetBinContent(highbin)
-    inHist.SetBinContent(lowbin-1, inHist.GetBinContent(lowbin-1) + extra)
-    for i in range(lowbin, highbin):
+    
+    inHist.SetBinContent(lowbin, inHist.GetBinContent(lowbin) + extra)
+    for i in range(lowbin+1, highbin+1):
         inHist.SetBinContent(i, 0)
     
 def getDrawOrder(groupHists, drawObj, info, ex=[]):

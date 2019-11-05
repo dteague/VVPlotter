@@ -136,7 +136,6 @@ for histName in info.getListOfHists():
         pad.setLegend()
         pad.axisSetup(info.getPlotSpec(histName), stacker.getRange())
 
-        
         fig = plt.gcf()
         fig.set_size_inches(8,8)
 
