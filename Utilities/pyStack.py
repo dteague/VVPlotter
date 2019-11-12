@@ -14,6 +14,8 @@ class pyStack():
         self.rHistTotal = None
         self.align = 'left' if isMult else "mid"
         self.title = None
+        self.options = {"stacked":True, "histtype":"stepfilled"}
+        
         
         for name, hist in drawOrder:
             self.names.append(name)
@@ -55,7 +57,12 @@ class pyStack():
     def getRHist(self):
         return self.rHistTotal
 
-                
+    def setDrawType(self, drawtype):
+        if drawtype == "compare":
+            self.options["stacked"] = False
+            self.options["histtype"] = "step"
+            self.edgecolors = self.colors
+
     def _getXVal(self):
         return [self.bins[:-1]]*len(self.stack)
 
@@ -69,7 +76,9 @@ class pyStack():
                 return (self.bins[0], val)
 
     def getInputs(self, **kwargs):
-        return dict({"weights":self.stack, "x":self._getXVal(), "bins":self.bins, "histtype":'stepfilled', "color":self.colors, "stacked":True, "label":self.fancyNames, 'align':self.align, }, **kwargs)
+        rDict = dict({"weights":self.stack, "x":self._getXVal(), "bins":self.bins, "color":self.colors, "label":self.fancyNames, 'align':self.align, }, **self.options)
+        rDict.update(kwargs)
+        return rDict
 
     def applyPatches(self, plot, patches):
         for p, ec in zip(patches, self.edgecolors):

@@ -57,6 +57,22 @@ def getTableRow(image_file):
     </td>\n'''.format(image=image_file, name=image_file.split(".")[-2])
     
 
+def getTableRowTest(full_path):
+    idx = full_path.rfind('/')
+    image = full_path[idx+1:]
+    imageName= image[:-4]
+    dir = full_path[:idx]
+    str =  '<td style="text-align: center;">\n' \
+        '<img src="plots/{image}" class="autoResizeImage" /><br/>\n'.format(image=image)
+    if glob.glob("%s/logs/%s_info.log" % (dir, imageName)):
+        str += "<a href=\"logs/{name}_info.log\">[log]</a>   \n".format(name=imageName)
+    if glob.glob("%s/plots/%s.pdf" % (dir, imageName)):
+        str += "<a href=\"logs/{name}.pdf\">[pdf]</a> \n".format(name=imageName)
+    str += "</td>\\n\n"
+    return str
+
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('-p', '--path_to_files', type=str, required=True)

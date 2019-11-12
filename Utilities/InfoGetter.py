@@ -1,3 +1,4 @@
+
 import os
 import json
 import imp
@@ -104,13 +105,13 @@ class InfoGetter:
 
     def setupSumWeight(self, inFile):
         return_dict = dict()
-        inFile.cd()
-
+        
         for dir in inFile.GetListOfKeys():
+            inFile.cd()
             r.gDirectory.cd(dir.GetName())
             sumweight = r.gDirectory.Get('sumweights')
+            if not sumweight:  continue
             return_dict[dir.GetName()] = sumweight.Integral()
-            inFile.cd()
         return return_dict
 
     def setDrawStyle(self, drawStyle):

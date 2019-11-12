@@ -44,6 +44,7 @@ def getNormedHistos(inFile, info, histName, chan):
         sample = dir.GetName()
         r.gDirectory.cd(sample)
         hist = r.gDirectory.Get("%s_%s" % (histName, chan))
+        if not hist: continue
         groups = info.getGroupName(sample)
         if hist.Integral() <= 0:
             inFile.cd()

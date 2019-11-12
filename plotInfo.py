@@ -20,6 +20,16 @@ info = {
         "set_xlabel": "$N_{b}$",
         "isMultiplicity" : True,
     },
+    "nloosebjet" : {
+        "set_xlim" :  (0, 8),
+        "set_xlabel": "$N_{bloose}$",
+        "isMultiplicity" : True,
+    },
+    "ntightbjet" : {
+        "set_xlim" :  (0, 8),
+        "set_xlabel": "$N_{btight}$",
+        "isMultiplicity" : True,
+    },
     "njet" : {
         "set_xlim" :  (0, 12),
         "set_xlabel": '$N_{jets}$',
@@ -31,13 +41,13 @@ info = {
         "isMultiplicity" : True,
     },
     "ptl1" : {
-        "Rebin" :  8,
+        "Rebin" :  4,
         "set_xlim" :   (0, 400),
         "set_xlabel": "$p_{T}(\ell_{1})$ (GeV)",
     },
     "ptl2" : {
-        "Rebin" :  4,
-        "set_xlim" :   (0, 85),
+        "Rebin" :  2,
+        "set_xlim" :   (0, 200),
         "set_xlabel": "$p_{T}(\ell_{2})$ (GeV)",
     },
     "ptj1" : {
@@ -57,61 +67,127 @@ info = {
     },
     "etaj1" : {
         "Rebin" :      20,
-        "set_xlabel": "η(j_{1})",
+        "set_xlabel": "$\eta(j_{1})$",
     },
     "etaj2" : {
         "Rebin" :      20,
-        "set_xlabel": "η(j_{2})",
+        "set_xlabel": "$\eta(j_{2})$",
     },
     "etaj3" : {
         "Rebin" :      20,
-        "set_xlabel": "η(j_{3})",
+        "set_xlabel": "$\eta(j_{3})$",
     },
     "ptb1" : {
         "Rebin" : 8,
         "set_xlim" :   (0, 600),
-        "set_xlabel": "p_{T}(b_{1}) (GeV)",
+        "set_xlabel": "$p_{T}(b_{1})$ (GeV)",
     },
     "ptb2" : {
         "Rebin" : 8,
         "set_xlim" :   (0, 300),
-        "set_xlabel": "p_{T}(b_{2}) (GeV)",
+        "set_xlabel": "$p_{T}(b_{2})$ (GeV)",
     },
     "ptb3" : {
         "Rebin" : 4,
         "set_xlim" :   (0, 200),
-        "set_xlabel": "p_{T}(b_{3}) (GeV)",
+        "set_xlabel": "$p_{T}(b_{3})$ (GeV)",
     },
     "etab1" : {
         "Rebin" :      20,
-        "set_xlabel": "$η(b_{1})$",
+        "set_xlabel": u"$η(b_{1})$",
     },
     "etab2" : {
         "Rebin" :      20,
-        "set_xlabel": "$η(b_{2})$",
+        "set_xlabel": u"$η(b_{2})$",
     },
     "etab3" : {
         "Rebin" :      20,
-        "set_xlabel": "$η(b_{3})$",
+        "set_xlabel": u'$η(b_{3})$',
     },
     "ptj1OverHT" : {
         "Rebin" :  4,
-        "set_xlabel": "$p_{T}(j_{1})$ / H_{T}",
+        "set_xlabel": "$p_{T}(j_{1}) / H_{T}$",
     },
     "ptb1OverHT" : {
         "Rebin" :  4,
-        "set_xlabel": "$p_{T}(b_{1})$ / H_{T}",
+        "set_xlabel": "$p_{T}(b_{1}) / H_{T}$",
     },
     "dphi_l1j1"  : {
         "Rebin" :  25,
-        "set_xlabel": "$Δφ(ℓ_{1}, j_{1})$",
+        "set_xlabel": u"$Δφ(ℓ_{1}, j_{1})$",
     },
     "dphi_l1j2"  : {
         "Rebin" :  25,
-        "set_xlabel": "$Δφ(ℓ_{1}, j_{2})$",
+        "set_xlabel": u"$Δφ(ℓ_{1}, j_{2})$",
     },
     "dphi_l1j3"  : {
         "Rebin" :  25,
-        "set_xlabel": "$Δφ(ℓ_{1}, j_{3})$",
+        "set_xlabel": u"$Δφ(ℓ_{1}, j_{3})$",
+    },
+    "dilepCharge" : {
+        "set_xlabel": "$q(\ell_{1})\times q(\ell_{2})$"
+    },
+    "DRjet" : {
+        "set_xlabel": "$\Delta R(j_{1}, j_{2})$",
+        "Rebin"      : 2,
+    },
+    "DRLep" : {
+        "set_xlabel" : "$\Delta R(\ell_{1}, \ell_{2})$",
+        "Rebin"      : 2,
+    },
+    "dijetMass" : {
+        "set_xlabel" : "$M(j_{1}, j_{2})$",
+        "set_xlim"   :  (0,60)
+    },
+    "dilepMass" : {
+        "set_xlabel": "$M(\ell_{1}, \ell_{2})$",
+        "set_xlim"  :  (0, 600),
+        "Rebin"     :  10,
+    },
+    "jetpt" : {
+        "set_xlabel": "$p_{T}$(all jets) (GeV)",
+        "Rebin" :      8,
+    },
+    "bjetpt" : {
+        "set_xlabel": "$p_{T}$(all bs) (GeV)",
+        "Rebin":       8,
+    },
+    "Shape1" : {
+        "set_xlabel": "shape1",
+        "Rebin":      4
+    },
+    "Shape2" : {
+        "set_xlabel": "shape2",
+        "Rebin":      4
+    },
+    "LepCos" : {
+        "set_xlabel": "$cos(\ell_{1}, \ell_{2})",
+        "Rebin":      4,
+    },
+    "JLep1Cos" : {
+        "set_xlabel": "$cos(j_{1}, \ell_{1})$",
+        "Rebin":      4,
+    },
+    "JLep2Cos" : {
+        "set_xlabel": "$cos(j_{1}, \ell_{2})$",
+        "Rebin":      4,
+    },
+    "JBCos" : {
+        "set_xlabel": "$cos(j_{1}, b_{1})$",
+        "Rebin":      4,
+        
+    },
+    "DRjb" : {
+        "set_xlabel": "$\Delta R(j_{1}, b_{1})$",
+        "set_xlim":   (0.4, 6),
+    },
+    "etaj" : {
+        "set_xlabel": "$eta(j)$",
+        "Rebin":      8
+    },
+    "etab" : {
+        "set_xlabel": "$\eta(b)$",
+        "Rebin":      8,
+        "set_xlim":   (-2.5, 2.5)
     },
 }

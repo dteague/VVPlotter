@@ -42,13 +42,14 @@ plt.rc('legend', fontsize=SMALL_SIZE)
 args = config.getComLineArgs()
 
 drawObj = {
-           "ttz"       : "mediumseagreen",
-           "rare"      : "hotpink",
-           "ttXY"      : "cornflowerblue",
-           "ttw"       : "darkgreen",
-           "xg"        : "indigo",
-           "tth"       : "slategray",
-           "tttt"      : "red",
+           # "ttz"       : "mediumseagreen",
+           # "rare"      : "hotpink",
+           # "ttXY"      : "cornflowerblue",
+           # "ttw"       : "darkgreen",
+           # "xg"        : "indigo",
+           # "tth"       : "slategray",
+           "tttt_201X"      : "crimson",
+           "ttt_201X"      : "cornflowerblue",
 
           # "ttt"       : "fill-hotpink",
            # "2017"      : "fill-green",
@@ -65,7 +66,11 @@ if len(anaSel) == 1:
     anaSel.append('')
 
 info = InfoGetter(anaSel[0], anaSel[1], inFile)
-info.setLumi(args.lumi*1000)
+if args.drawStyle == "compare":
+    info.setLumi(-1)    
+else:
+    info.setLumi(args.lumi*1000)
+
 info.setDrawStyle(args.drawStyle)
 
 if not drawObj:
@@ -93,7 +98,7 @@ for histName in info.getListOfHists():
         groupHists = config.getNormedHistos(inFile, info, histName, chan)
         if not groupHists or groupHists.values()[0].InheritsFrom("TH2"):
             continue
-
+        
         exclude = []
         # signal
         if signalName in groupHists:
@@ -117,7 +122,11 @@ for histName in info.getListOfHists():
             stack_divide = r.TGraphAsymmErrors(stacker.getRHist(), stacker.getRHist(), "pois")
             ratio = pyHist("Ratio", divide, "black", isTH1=False, isMult=isDcrt)
             band = pyErrors("Ratio", stack_divide, "plum", isTH1=False, isMult=isDcrt)
-                                                        
+
+        # Extra options
+        stacker.setDrawType(args.drawStyle)
+
+            
         pad = pyPad(plt, ratio!=None)
         
         n, bins, patches = pad.getMainPad().hist(**stacker.getInputs())
