@@ -42,20 +42,19 @@ plt.rc('legend', fontsize=SMALL_SIZE)
 args = config.getComLineArgs()
 
 drawObj = {
-           # "ttz"       : "mediumseagreen",
-           # "rare"      : "hotpink",
-           # "ttXY"      : "cornflowerblue",
-           # "ttw"       : "darkgreen",
-           # "xg"        : "indigo",
-           # "tth"       : "slategray",
-           "tttt_201X"      : "crimson",
-           "ttt_201X"      : "cornflowerblue",
+           "tttt"     : "crimson",
+           "ttt"          : "hotpink",
+           "ttz"          : "mediumseagreen",
+           "rare_no3top"  : "hotpink",
+           "ttXY"         : "cornflowerblue",
+           "ttw"          : "darkgreen",
+           "xg"           : "indigo",
+           "tth"          : "slategray",
+           "other"        : "blue",
+           # "tttt_201X"      : "crimson",
+           # "ttt_201X"      : "cornflowerblue",
 
-          # "ttt"       : "fill-hotpink",
-           # "2017"      : "fill-green",
-          # "ttt_line"  : "nofill-cornflowerblue-thick",
-          #  "tttt_line" : "nofill-hotpink",
-           # "other"     : "fill-hotpink",
+           
 }
 
 # In out
@@ -83,9 +82,9 @@ if args.signal and args.signal not in drawObj:
 signalName = args.signal
 channels = args.channels.split(',')
 
+channels = ["all", "OS", "SS", "mult", "one"]
 
-
-basePath = config.setupPathAndDir(args.analysis, args.drawStyle, args.path)
+basePath = config.setupPathAndDir(args.analysis, args.drawStyle, args.path, channels)
 
 for histName in info.getListOfHists():
     if not info.isInPlotSpec(histName): continue
@@ -104,7 +103,7 @@ for histName in info.getListOfHists():
         if signalName in groupHists:
             signal = pyHist(info.getLegendName(signalName), groupHists[signalName], drawObj[signalName], isMult=isDcrt)
             exclude.append(signalName)
-
+        
         # data
         if False:
             data = pyHist("Data", groupHists['data'], 'black', isMult=isDcrt)
@@ -115,7 +114,6 @@ for histName in info.getListOfHists():
         stacker.setColors(drawObj)
         stacker.setLegendNames(info)
         error = pyErrors("Stat Errors", stacker.getRHist(), "plum", isMult=isDcrt)
-        
         # ratio
         if signal:
             divide = r.TGraphAsymmErrors(signal.getRHist(), stacker.getRHist(), "pois")
@@ -128,7 +126,7 @@ for histName in info.getListOfHists():
 
             
         pad = pyPad(plt, ratio!=None)
-        
+
         n, bins, patches = pad.getMainPad().hist(**stacker.getInputs())
         stacker.applyPatches(plt, patches)
 
@@ -148,8 +146,10 @@ for histName in info.getListOfHists():
         fig = plt.gcf()
         fig.set_size_inches(8,8)
 
-        plt.savefig("%s/plots/%s.png" % (basePath, histName), format="png", bbox_inches='tight')
-        plt.savefig("%s/plots/%s.pdf" % (basePath, histName), format="pdf", bbox_inches='tight')
+        if chan == "all":
+            chan = ""
+        plt.savefig("%s/%s/plots/%s.png" % (basePath, chan, histName), format="png", bbox_inches='tight')
+        plt.savefig("%s/%s/plots/%s.pdf" % (basePath, chan, histName), format="pdf", bbox_inches='tight')
         plt.close()
 
         # setup log file
@@ -161,8 +161,10 @@ for histName in info.getListOfHists():
         logger.writeOut()
 
         
-
-writeHTML(basePath, args.analysis)
+channels.remove("all")
+writeHTML(basePath, args.analysis, channels)
+for chan in channels:
+    writeHTML("%s/%s" % (basePath, chan), "%s/%s" % (args.analysis, chan))
 userName = os.environ['USER']
 htmlPath = basePath[basePath.index(userName)+len(userName)+1:]
 if 'hep.wisc.edu' in os.environ['HOSTNAME']:

@@ -133,7 +133,7 @@ def printDrawObjAndExit(info):
     exit()
 
 
-def setupPathAndDir(analysis, drawStyle, path):
+def setupPathAndDir(analysis, drawStyle, path, chans):
     """Setup HTML directory area and return path made"""
     extraPath = time.strftime("%Y_%m_%d")
     if path:
@@ -145,7 +145,11 @@ def setupPathAndDir(analysis, drawStyle, path):
         basePath = '/eos/home-{0:1.1s}/{0}/www'.format(os.environ['USER'])
     basePath += '/%s/%s/%s_%s' % ('PlottingResults', analysis, extraPath, drawStyle)
 
-    checkOrCreateDir('%s' % (basePath))
-    checkOrCreateDir('%s/plots' % (basePath))
-    checkOrCreateDir('%s/logs' % (basePath))
+    for chan in chans:
+        if chan == "all":
+            chan = ""
+        
+        checkOrCreateDir('%s/%s' % (basePath,chan))
+        checkOrCreateDir('%s/%s/plots' % (basePath,chan))
+        checkOrCreateDir('%s/%s/logs' % (basePath,chan))
     return basePath

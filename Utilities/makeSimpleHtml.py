@@ -6,7 +6,7 @@ import glob
 import imghdr
 import argparse
 
-def writeHTML(path, name):
+def writeHTML(path, name, channels=[]):
     image_files = [x for x in glob.glob(path + "/plots/*.*") if imghdr.what(x)]
     with open('%s/index.html' % path, 'w') as index:
         index = open('%s/index.html' % path, 'w')
@@ -29,15 +29,15 @@ def writeHTML(path, name):
                     
                 '  <table>\n'.format(title=name)
         )
-        if path.split("/")[-1] in ["eee", "eem", "emm", "mmm"]:
-            index.write('  <div style="text-align: center;">Plots by channel: \n'
-                    '  <a href="eee">[eee]</a> - '
-                    '  <a href="eem">[eem]</a> - '
-                    '  <a href="emm">[emm]</a> - '
-                    '  <a href="mmm">[mmm]</a>'
-                    '</div>\n'
-                    '  <table>\n'
-            )
+        if channels:
+            index.write('  <div style="text-align: center;">Plots by channel: \n <br/> \n')
+            for chan in channels:
+                index.write('  <a href="{0}">[{0}]</a> - \n'.format(chan))
+            
+            index.write('</div>\n'
+                    '  <table>\n')
+
+                    
         for i, image_file in enumerate(image_files):
             file_name = image_file.strip().split('/')[-1].strip() 
             if i % 3 == 0: 
