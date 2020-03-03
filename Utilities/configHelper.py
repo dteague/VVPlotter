@@ -17,6 +17,8 @@ def getComLineArgs():
                         help="List (separate by commas) of channels to plot")
     parser.add_argument("-sig", "--signal", type=str, default='',
                         help="Name of the group to be made into the Signal")
+    parser.add_argument("-j", type=int, default=1,
+                        help="Number of cores")
     
     parser.add_argument("-l", "--lumi", type=float, default=35.9,
                         help="Luminsoity in fb-1. Default 35.9 fb-1. "
@@ -46,9 +48,9 @@ def getNormedHistos(inFile, info, histName, chan):
         hist = r.gDirectory.Get("%s_%s" % (histName, chan))
         if not hist: continue
         groups = info.getGroupName(sample)
-        if hist.Integral() <= 0:
-            inFile.cd()
-            continue
+        # if hist.Integral() <= 0:
+        #     inFile.cd()
+        #     continue
         
         if "Rebin" in info.getPlotSpec(histName):
             hist.Rebin(info.getPlotSpec(histName)["Rebin"])
@@ -62,7 +64,8 @@ def getNormedHistos(inFile, info, histName, chan):
         inFile.cd()
     for name, hist in groupHists.iteritems():
         if info.getLumi() < 0:
-            hist.Scale(1/hist.Integral())
+            scale = 1/hist.Integral() if hist.Integral() > 0 else 1.
+            hist.Scale(scale)
         else:
             hist.Scale(info.getLumi())
         hist.SetName(name)
@@ -116,8 +119,21 @@ def getMax(stack, signal=None, data=None):
     if data:
         maxHeight = max(maxHeight, data.GetMaximum())
     return maxHeight
-    
- 
+
+from math import log10
+def findScale(s, b):
+    scale = 1
+    prevS = 1
+    while b//(scale*s) != 0:
+        prevS = scale
+        if int(log10(scale)) == log10(scale):
+            scale *= 5
+        else:
+            scale *= 2
+    return prevS
+
+
+
 def checkOrCreateDir(path):
     if not os.path.exists(path):
         os.makedirs(path)

@@ -2,6 +2,7 @@ import ROOT as r
 import numpy as np
 from matplotlib import colors
 
+
 class pyHist:
     def __init__(self, name, rootHist, color, isTH1=True, isMult=False):
         self.name = name
@@ -44,7 +45,14 @@ class pyHist:
     def getRHist(self):
         return self.hist
 
+    def scaleHist(self, scale):
+        self.y = np.multiply(self.y, scale)
+        self.yerr = np.multiply(self.yerr, scale)
+        if scale != 1:
+            self.name += " x " + str(scale)
+        self.hist.Scale(scale)
         
+    
     def getInputs(self, **kwargs):
         return dict({"x":self.x, "xerr":self.xerr, "y":self.y, "yerr":self.yerr, "ecolor":self.color, "color":self.color, "barsabove":True, "label":self.name,},  **kwargs)
 
