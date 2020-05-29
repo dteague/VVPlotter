@@ -16,6 +16,8 @@ from Utilities.LogFile import LogFile
 
 from Utilities.makeSimpleHtml import writeHTML
 import numpy as np
+import matplotlib
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import datetime
 import sys
@@ -46,16 +48,16 @@ plt.rc('legend', fontsize=SMALL_SIZE)
 
 
 drawObj = {
-           "tttt_201X"     : "mediumslateblue",
-           "ttt_201X"          : "tomato",
-           # "ttz"          : "mediumseagreen",
-           # "rare_no3top"  : "darkorange",
-           # "ttXY"         : "cornflowerblue",
-           # "ttw"          : "darkgreen",
-           # "xg"           : "indigo",
-           # "tth"          : "slategray",
-           # "other"        : "blue",
-           # "tttt_201X"      : "crimson",
+           #"tttt_"     : "mediumslateblue",
+           "ttt"          : "crimson",
+           "ttz"          : "mediumseagreen",
+           "rare_no3top"  : "darkorange",
+           "ttXY"         : "cornflowerblue",
+           "ttw"          : "darkgreen",
+           "xg"           : "indigo",
+           "tth"          : "slategray",
+           "other"        : "blue",
+           "tttt_201X"      : "darkmagenta",
            # "ttt_201X"      : "cornflowerblue",
 
            
@@ -68,7 +70,7 @@ anaSel = args.analysis.split('/')
 if len(anaSel) == 1:
     anaSel.append('')
 
-info = InfoGetter(anaSel[0], anaSel[1], inFile)
+info = InfoGetter(anaSel[0], anaSel[1], inFile, args.info)
 if args.drawStyle == "compare":
     info.setLumi(-1)    
 else:
@@ -86,7 +88,7 @@ if args.signal and args.signal not in drawObj:
 signalName = args.signal
 channels = args.channels.split(',')
 
-channels = ["all", "OS", "SS"]# , "mult", "one"]
+channels = ['SS']#["all", "OS", "SS"]# , "mult", "one"]
 
 basePath = config.setupPathAndDir(args.analysis, args.drawStyle, args.path, channels)
 
@@ -104,7 +106,7 @@ def makePlot(histName, info, basePath, infileName, channels):
     for chan in channels:
         signal, data, ratio, band, error = None, None, None, None, None
         
-
+        
         groupHists = config.getNormedHistos(inFile, info, histName, chan)
         if not groupHists or groupHists.values()[0].InheritsFrom("TH2"):
             return
@@ -127,9 +129,9 @@ def makePlot(histName, info, basePath, infileName, channels):
         stacker.setLegendNames(info)
         error = pyErrors("Stat Errors", stacker.getRHist(), "plum", isMult=isDcrt)
         if signal:
-            scale = config.findScale(max(signal.y), stacker.getRHist().GetMaximum())
+            scale = config.findScale(np.sum(stacker.stack)/sum(signal.y))
+            #scale = config.findScale(max(signal.y), stacker.getRHist().GetMaximum())
             signal.scaleHist(scale)
-
         # ratio
         if signal:
             divide = r.TGraphAsymmErrors(signal.getRHist(), stacker.getRHist(), "pois")
@@ -146,6 +148,7 @@ def makePlot(histName, info, basePath, infileName, channels):
         stacker.applyPatches(plt, patches)
         
         if signal:
+            pad.getMainPad().hist(**signal.getInputsHist())
             pad.getMainPad().errorbar(**signal.getInputs(fmt='o', markersize=4))
         if data:
             pad.getMainPad().errorbar(**data.getInputs(fmt='o', markersize=4))
@@ -180,13 +183,21 @@ def makePlotStar(args):
 
 
 import multiprocessing as mp
-pool = mp.Pool(args.j)
-results = pool.map(makePlotStar, argList)
-pool.close()
-pool.join()
+if args.j > 1:
+    pool = mp.Pool(args.j)
+    results = pool.map(makePlotStar, argList)
+    pool.close()
+    pool.join()
+else:
+    for plot in argList:
+        makePlotStar(plot)
 
 
-channels.remove("all")
+try:
+    channels.remove("all")
+except ValueError:
+    print("No all channel")
+    
 writeHTML(basePath, args.analysis, channels)
 for chan in channels:
     writeHTML("%s/%s" % (basePath, chan), "%s/%s" % (args.analysis, chan))

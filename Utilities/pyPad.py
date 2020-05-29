@@ -60,10 +60,12 @@ class pyPad:
         # user specified
         for key, val in info.iteritems():
             try:
-                getattr(axis, key)(val)
+                if "_y" in key:
+                    getattr(self.up, key)(val)
+                else:
+                    getattr(axis, key)(val)
             except:
                 pass
-        
         
  
     def rightAlignLabel(self, axis, isYaxis=False):

@@ -7,11 +7,14 @@ class pyHist:
     def __init__(self, name, rootHist, color, isTH1=True, isMult=False):
         self.name = name
         self.x = list()
+        self.xbins = list()
         self.y = list()
+        self.yPadded = list()        
         self.yerr = list()
         self.xerr = list()
         self.hist = rootHist.Clone()
         self.color = color
+        self.align = 'left' if isMult else "mid"
         
         if '\\' in self.name:
                 self.name = r'$%s$' % self.name
@@ -23,13 +26,15 @@ class pyHist:
         
     def setupTH1(self, rootHist, isMult):
         width = rootHist.GetBinWidth(1) if isMult else 0.0
-        
         for i in range(1, rootHist.GetNbinsX()+1):
+            self.yPadded.append(rootHist.GetBinContent(i))
             if rootHist.GetBinContent(i) <= 0:
                 continue
+            self.xbins.append(rootHist.GetBinLowEdge(i))
             self.x.append(rootHist.GetBinCenter(i)-width/2)
             self.y.append(rootHist.GetBinContent(i))
             self.yerr.append(rootHist.GetBinError(i))
+        self.xbins.append(rootHist.GetXaxis().GetXmax())
         self.xerr = [rootHist.GetBinWidth(1)/2]*len(self.x)
 
     def setupTGraph(self, rootGraph, isMult):
@@ -55,4 +60,10 @@ class pyHist:
     
     def getInputs(self, **kwargs):
         return dict({"x":self.x, "xerr":self.xerr, "y":self.y, "yerr":self.yerr, "ecolor":self.color, "color":self.color, "barsabove":True, "label":self.name,},  **kwargs)
+
+    def getInputsHist(self, **kwargs):
+        return dict({"weights":self.y, "x":self.x, "bins":self.xbins, "color":self.color, 'align':self.align, "histtype":"step"}, **kwargs)
+                
+
+    
 

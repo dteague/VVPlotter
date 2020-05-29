@@ -33,6 +33,8 @@ def getComLineArgs():
                         help="Do not add ratio comparison")
     parser.add_argument("--autoScale", type=float, default=-1.,
                         help="Ignore Max argument and scale max to ratio given")
+    parser.add_argument("--info", type=str, default="plotInfo.py",
+                        help="Name of file containing histogram Info")
     
     return parser.parse_args()
 
@@ -55,13 +57,16 @@ def getNormedHistos(inFile, info, histName, chan):
         if "Rebin" in info.getPlotSpec(histName):
             hist.Rebin(info.getPlotSpec(histName)["Rebin"])
         addOverflow(hist, info.getUpBinUser(histName))
+    
         hist.Scale(info.getXSec(sample) / info.getSumweight(sample))
+        
         for group in groups:
             if group not in groupHists.keys():
                 groupHists[group] = hist.Clone()
             else:
                 groupHists[group].Add(hist)
         inFile.cd()
+        
     for name, hist in groupHists.iteritems():
         if info.getLumi() < 0:
             scale = 1/hist.Integral() if hist.Integral() > 0 else 1.
@@ -132,7 +137,9 @@ def findScale(s, b):
             scale *= 2
     return prevS
 
-
+def findScale(ratio):
+    sigNum = 10**int(log10(ratio))
+    return int((ratio)/sigNum)*sigNum
 
 def checkOrCreateDir(path):
     if not os.path.exists(path):

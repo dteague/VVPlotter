@@ -6,7 +6,7 @@ import glob
 import ROOT as r
 
 class InfoGetter:
-    def __init__(self, analysis, selection, inFile):
+    def __init__(self, analysis, selection, inFile, plotInfo="plotInfo.py"):
         try:
             adm_path = os.environ['ADM_PATH']
         except:
@@ -22,7 +22,7 @@ class InfoGetter:
         self.member2GroupMap = self.setupMember2GroupMap()
         self.listOfHists = self.setupListOfHists(inFile)
         self.sumweights = self.setupSumWeight(inFile)
-        self.plotSpecs = self.readAllInfo("plotInfo.py")
+        self.plotSpecs = self.readAllInfo(plotInfo)
         self.lumi = 35900 #default
         
         # if os.path.isfile("%s/PlotObjects/%s/%s.json" % (adm_path, analysis, selection)):
