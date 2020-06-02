@@ -3,6 +3,7 @@ from Utilities.pyUproot import GenericHist
 from matplotlib import colors as clr
 import numpy as np
 
+
 class pyStack():
     def __init__(self, drawOrder, isMult=False):
         self.stack = list()
@@ -16,15 +17,14 @@ class pyStack():
         self.histTotal = GenericHist()
         self.align = 'left' if isMult else "mid"
         self.title = None
-        self.options = {"stacked":True, "histtype":"stepfilled"}
-        
-        
+        self.options = {"stacked": True, "histtype": "stepfilled"}
+
         for name, hist in drawOrder:
             self.names.append(name)
             self.hists.append(hist)
             self.stack.append(hist.hist)
             self.histTotal += hist
-        
+
     def setColors(self, colorMap):
         for name in self.names:
             self.colors.append(colorMap[name])
@@ -48,7 +48,7 @@ class pyStack():
 
     def getHist(self):
         return self.histTotal
-    
+
     def setDrawType(self, drawtype):
         if drawtype == "compare":
             self.options["stacked"] = False
@@ -56,18 +56,26 @@ class pyStack():
             self.edgecolors = self.colors
 
     def _getXVal(self):
-        return [self.bins[:-1]]*len(self.stack)
+        return [self.bins[:-1]] * len(self.stack)
 
     def getRange(self):
         if self.bins[0] < 0:
             return (self.bins[0], self.bins[-1])
-        
+
         for highBin, val in zip(self.bins[::-1], self.histTotal.hist[::-1]):
             if val > 0.:
                 return (self.bins[0], highBin)
-        
+
     def getInputs(self, **kwargs):
-        rDict = dict({"weights":self.stack, "x":self._getXVal(), "bins":self.bins, "color":self.colors, "label":self.fancyNames, 'align':self.align, }, **self.options)
+        rDict = dict(
+            {
+                "weights": self.stack,
+                "x": self._getXVal(),
+                "bins": self.bins,
+                "color": self.colors,
+                "label": self.fancyNames,
+                'align': self.align,
+            }, **self.options)
         rDict.update(kwargs)
         return rDict
 

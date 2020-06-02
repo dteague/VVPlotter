@@ -1,10 +1,11 @@
 from matplotlib import gridspec
 
+
 class pyPad:
     """Documentation for pyPad
 
     """
-    def __init__(self, plot, makeRatio=True, ratio=(3,1)):
+    def __init__(self, plot, makeRatio=True, ratio=(3, 1)):
         total = ratio[0] + ratio[1]
         self.makeRatio = makeRatio
         self.gs = gridspec.GridSpec(total, 1)
@@ -17,24 +18,27 @@ class pyPad:
             self.setupTicks(self.down)
             self.up.xaxis.set_major_formatter(plot.NullFormatter())
             self.down.tick_params(direction="in")
-            self.up.get_shared_x_axes().join(self.up,self.down)
+            self.up.get_shared_x_axes().join(self.up, self.down)
         else:
             self.up = plot.gca()
-            
+
         self.setupTicks(self.up)
 
     def setupTicks(self, pad):
         pad.minorticks_on()
         pad.tick_params(direction="in", length=9, top=True, right=True)
-        pad.tick_params(direction="in", length=4, which='minor',top=True,right=True)
-        
+        pad.tick_params(direction="in",
+                        length=4,
+                        which='minor',
+                        top=True,
+                        right=True)
+
     def getMainPad(self):
         return self.up
 
     def getSubMainPad(self):
         return self.down
 
-    
     def setLegend(self, plotSpecs):
         if "legendLoc" in plotSpecs:
             self.up.legend(loc=plotSpecs["legendLoc"])
@@ -69,8 +73,7 @@ class pyPad:
                     getattr(axis, key)(val)
             except:
                 pass
-        
- 
+
     def rightAlignLabel(self, axis, isYaxis=False):
         label = axis.get_label()
         x_lab_pos, y_lab_pos = label.get_position()
@@ -80,7 +83,3 @@ class pyPad:
             label.set_position([1.0, y_lab_pos])
         label.set_horizontalalignment('right')
         axis.set_label(label)
-
-
-
-        

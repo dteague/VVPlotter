@@ -1,34 +1,40 @@
-
 import os
 import json
 import imp
 import glob
 import ROOT as r
 
+
 class InfoGetter:
     def __init__(self, analysis, selection, inFile, plotInfo="plotInfo.py"):
         try:
             adm_path = os.environ['ADM_PATH']
         except:
-            print('The Analysis Dataset Manager is found by the variable ADM_PATH')
-            print('Please set this path and consider setting it in your .bashrc')
+            print(
+                'The Analysis Dataset Manager is found by the variable ADM_PATH'
+            )
+            print(
+                'Please set this path and consider setting it in your .bashrc')
             exit(1)
         #adm_path = '
 
         self.analysis = analysis
         self.selection = selection
-        self.groupInfo = self.readAllInfo("%s/PlotGroups/%s.py" % (adm_path, analysis))
-        self.mcInfo = self.readAllInfo("%s/FileInfo/montecarlo/montecarlo_2016.py" % adm_path)
+        self.groupInfo = self.readAllInfo("%s/PlotGroups/%s.py" %
+                                          (adm_path, analysis))
+        self.mcInfo = self.readAllInfo(
+            "%s/FileInfo/montecarlo/montecarlo_2016.py" % adm_path)
         self.member2GroupMap = self.setupMember2GroupMap()
         self.listOfHists = self.setupListOfHists(inFile)
         self.sumweights = self.setupSumWeight(inFile)
         self.plotSpecs = self.readAllInfo(plotInfo)
-        self.lumi = 35900 #default
-        
+        self.lumi = 35900  #default
+
         # if os.path.isfile("%s/PlotObjects/%s/%s.json" % (adm_path, analysis, selection)):
         #     self.objectInfo = self.readAllInfo("%s/PlotObjects/%s/%s.json" % (adm_path, analysis, selection))
         # else:
         #     self.objectInfo = self.readAllInfo("%s/PlotObjects/%s.json" % (adm_path, analysis))
+
 
 ##################################
 #  _   _      _                  #
@@ -49,10 +55,10 @@ class InfoGetter:
 
     def readInfo(self, file_path):
         if ".py" not in file_path[-3:] and ".json" not in file_path[-5:]:
-            if os.path.isfile(file_path+".py"):
-                file_path = file_path +".py"
-            elif os.path.isfile(file_path+".json"): 
-                file_path = file_path +".json"
+            if os.path.isfile(file_path + ".py"):
+                file_path = file_path + ".py"
+            elif os.path.isfile(file_path + ".json"):
+                file_path = file_path + ".json"
             else:
                 return
         if ".py" in file_path[-3:]:
@@ -68,7 +74,7 @@ class InfoGetter:
             try:
                 json_info = json.load(json_file)
             except ValueError as err:
-                print "Error reading JSON file %s. The error message was:" % json_file_name 
+                print "Error reading JSON file %s. The error message was:" % json_file_name
                 print(err)
         return json_info
 
@@ -89,7 +95,7 @@ class InfoGetter:
                     return_map[hist] = dict()
                 return_map[hist][action] = value
         return return_map
-    
+
     def setupListOfHists(self, inFile):
         return_list = []
         for histName in inFile[inFile.keys()[0]].keys():
@@ -120,7 +126,7 @@ class InfoGetter:
     # | |_| |  __/ |_| ||  __/ |  \__ \ #
     #  \____|\___|\__|\__\___|_|  |___/ #
     #####################################
-    
+
     def getListOfHists(self):
         return self.listOfHists
 
@@ -150,7 +156,7 @@ class InfoGetter:
 
     def getGroups(self):
         return self.groupInfo.keys()
-    
+
     def getPlotSpec(self, histName):
         return self.plotSpecs[histName]
 
@@ -162,17 +168,13 @@ class InfoGetter:
 
     def isInPlotSpec(self, histName):
         return histName in self.plotSpecs
-            
+
     def isDiscreteGraph(self, histName):
         if "isMultiplicity" in self.plotSpecs[histName]:
             return self.plotSpecs[histName]["isMultiplicity"]
         else:
             return False
-                                                         
 
-
-
-    
     #################################
     #  ____       _   _             #
     # / ___|  ___| |_| |_ ___ _ __  #
@@ -183,16 +185,3 @@ class InfoGetter:
 
     def setLumi(self, lumi):
         self.lumi = lumi
-
-
-
-
-
-        
-
-            
-
-
-
-
-
