@@ -1,4 +1,5 @@
-import ROOT as r
+from Utilities.pyUproot import GenericHist
+
 from matplotlib import colors as clr
 import numpy as np
 
@@ -9,9 +10,10 @@ class pyStack():
         self.edgecolors = list()
         self.names = list()
         self.fancyNames = None
-        self.bins = None
+        self.bins = drawOrder[0][1].bins
+        self.title = drawOrder[0][1].name
         self.hists = list()
-        self.rHistTotal = None
+        self.histTotal = GenericHist()
         self.align = 'left' if isMult else "mid"
         self.title = None
         self.options = {"stacked":True, "histtype":"stepfilled"}
@@ -19,17 +21,9 @@ class pyStack():
         
         for name, hist in drawOrder:
             self.names.append(name)
-            if not self.title: self.title =hist.GetName()
-            if not self.bins:  self._setupBins(hist)
             self.hists.append(hist)
-            tmp = list()
-            for i in range(1, hist.GetNbinsX()+1):
-                tmp.append(hist.GetBinContent(i))
-            self.stack.append(tmp)
-            if not self.rHistTotal:
-                self.rHistTotal = hist.Clone(self.title)
-            else:
-                self.rHistTotal.Add(hist)
+            self.stack.append(hist.hist)
+            self.histTotal += hist
         
     def setColors(self, colorMap):
         for name in self.names:
@@ -48,15 +42,13 @@ class pyStack():
         cvec = clr.to_rgb(color)
         dark = 0.3
         return tuple([i - dark if i > dark else 0.0 for i in cvec])
-    
-    def _setupBins(self, hist):
-        self.bins = list()
-        for i in range(1, hist.GetNbinsX()+2):
-            self.bins.append(hist.GetBinLowEdge(i))
 
     def getRHist(self):
-        return self.rHistTotal
+        return self.histTotal.getTH1()
 
+    def getHist(self):
+        return self.histTotal
+    
     def setDrawType(self, drawtype):
         if drawtype == "compare":
             self.options["stacked"] = False
@@ -69,12 +61,11 @@ class pyStack():
     def getRange(self):
         if self.bins[0] < 0:
             return (self.bins[0], self.bins[-1])
-
-        nbins = self.rHistTotal.GetNbinsX()
-        for i, val in enumerate(self.bins[::-1]):
-            if self.rHistTotal.GetBinContent(nbins-i) > 0.:
-                return (self.bins[0], val)
-
+        
+        for highBin, val in zip(self.bins[::-1], self.histTotal.hist[::-1]):
+            if val > 0.:
+                return (self.bins[0], highBin)
+        
     def getInputs(self, **kwargs):
         rDict = dict({"weights":self.stack, "x":self._getXVal(), "bins":self.bins, "color":self.colors, "label":self.fancyNames, 'align':self.align, }, **self.options)
         rDict.update(kwargs)

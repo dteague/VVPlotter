@@ -7,14 +7,13 @@ import os
 import ROOT as r
 
 from Utilities.InfoGetter import InfoGetter
-
 from Utilities.pyHist import pyHist
 from Utilities.pyStack import pyStack
 from Utilities.pyErrors import pyErrors
 from Utilities.pyPad import pyPad
 from Utilities.LogFile import LogFile
-
 from Utilities.makeSimpleHtml import writeHTML
+
 import numpy as np
 import matplotlib
 matplotlib.use('Agg')
@@ -22,7 +21,7 @@ import matplotlib.pyplot as plt
 import datetime
 import sys
 import time
-
+import uproot
 
 # run time variables
 callTime = str(datetime.datetime.now())
@@ -64,7 +63,7 @@ drawObj = {
 }
 
 # In out
-inFile = r.TFile(args.infile)
+inFile = uproot.open(args.infile)
 
 anaSel = args.analysis.split('/')
 if len(anaSel) == 1:
@@ -82,8 +81,8 @@ if not drawObj:
     config.printDrawObjAndExit(info)
 
 if args.signal and args.signal not in drawObj:
-    print( "signal not in list of groups!")
-    print( drawObj.keys())
+    print("signal not in list of groups!")
+    print(drawObj.keys())
     exit(1)
 signalName = args.signal
 channels = args.channels.split(',')
@@ -100,22 +99,21 @@ for histName in info.getListOfHists():
 
 
 def makePlot(histName, info, basePath, infileName, channels):
-    print "Processing %s" % histName
+    print("Processing {}".format(histName))
     isDcrt = info.isDiscreteGraph(histName)
-    inFile = r.TFile(infileName)
+    inFile = uproot.open(infileName)
     for chan in channels:
         signal, data, ratio, band, error = None, None, None, None, None
         
-        
+        #### FIX
         groupHists = config.getNormedHistos(inFile, info, histName, chan)
-        if not groupHists or groupHists.values()[0].InheritsFrom("TH2"):
-            return
+        # if not groupHists or groupHists.values()[0].InheritsFrom("TH2"):
+        #     return
         
         exclude = []
         # signal
         if signalName in groupHists:
             signal = pyHist(info.getLegendName(signalName), groupHists[signalName], drawObj[signalName], isMult=isDcrt)
-            #signal.scaleHist(500)
             exclude.append(signalName)
         
         # data
@@ -127,7 +125,7 @@ def makePlot(histName, info, basePath, infileName, channels):
         stacker = pyStack(drawOrder, isMult=isDcrt)
         stacker.setColors(drawObj)
         stacker.setLegendNames(info)
-        error = pyErrors("Stat Errors", stacker.getRHist(), "plum", isMult=isDcrt)
+        error = pyErrors("Stat Errors", stacker.getHist(), "plum", isMult=isDcrt)
         if signal:
             scale = config.findScale(np.sum(stacker.stack)/sum(signal.y))
             #scale = config.findScale(max(signal.y), stacker.getRHist().GetMaximum())
@@ -135,7 +133,7 @@ def makePlot(histName, info, basePath, infileName, channels):
         # ratio
         if signal:
             divide = r.TGraphAsymmErrors(signal.getRHist(), stacker.getRHist(), "pois")
-            stack_divide = r.TGraphAsymmErrors(stacker.getRHist(), stacker.getRHist(), "pois")
+            stack_divide= r.TGraphAsymmErrors(stacker.getRHist(), stacker.getRHist(), "pois")
             ratio = pyHist("Ratio", divide, "black", isTH1=False, isMult=isDcrt)
             band = pyErrors("Ratio", stack_divide, "plum", isTH1=False, isMult=isDcrt)
 
@@ -152,13 +150,13 @@ def makePlot(histName, info, basePath, infileName, channels):
             pad.getMainPad().errorbar(**signal.getInputs(fmt='o', markersize=4))
         if data:
             pad.getMainPad().errorbar(**data.getInputs(fmt='o', markersize=4))
-        # if error:
-        #     pad.getMainPad().hist(**error.getInputs(hatch='//', alpha=0.4,label="Stat Error"))
+        if error:
+            pad.getMainPad().hist(**error.getInputs(hatch='//', alpha=0.4,label="Stat Error"))
         if ratio:
             pad.getSubMainPad().errorbar(**ratio.getInputs(fmt='o', markersize=4))
             pad.getSubMainPad().hist(**band.getInputs(hatch='//', alpha=0.4,))
         
-        pad.setLegend()
+        pad.setLegend(info.getPlotSpec(histName))
         pad.axisSetup(info.getPlotSpec(histName), stacker.getRange())
 
         fig = plt.gcf()
@@ -166,12 +164,14 @@ def makePlot(histName, info, basePath, infileName, channels):
 
         if chan == "all":
             chan = ""
-        plt.savefig("%s/%s/plots/%s.png" % (basePath, chan, histName), format="png", bbox_inches='tight')
-        plt.savefig("%s/%s/plots/%s.pdf" % (basePath, chan, histName), format="pdf", bbox_inches='tight')
+        baseChan = "{}/{}".format(basePath, chan)
+        plotBase = "{}/plots/{}".format(baseChan, histName)
+        plt.savefig("{}.png".format(plotBase), format="png", bbox_inches='tight')
+        plt.savefig("{}.pdf".format(plotBase), format="pdf", bbox_inches='tight')
         plt.close()
 
         # setup log file
-        logger = LogFile(histName, info, "%s/%s/logs" % (basePath, chan))
+        logger = LogFile(histName, info, "{}/logs".format(baseChan))
         logger.addMetaInfo(callTime, command)
         logger.addMC(drawOrder)
         if signal:
@@ -196,16 +196,21 @@ else:
 try:
     channels.remove("all")
 except ValueError:
-    print("No all channel")
+    if len(channels) == 1:
+        baseChan = "{}/{}".format(basePath, channels[0])
+        config.copyDirectory("{}/plots".format(baseChan), "{}/plots".format(basePath))
+        config.copyDirectory("{}/logs".format(baseChan), "{}/logs".format(basePath))
+    else:
+        print("No all channel")
     
 writeHTML(basePath, args.analysis, channels)
 for chan in channels:
-    writeHTML("%s/%s" % (basePath, chan), "%s/%s" % (args.analysis, chan))
+    writeHTML("{}/{}".format(basePath, chan), "{}/{}".format(args.analysis, chan))
 userName = os.environ['USER']
 htmlPath = basePath[basePath.index(userName)+len(userName)+1:]
 if 'hep.wisc.edu' in os.environ['HOSTNAME']:
-    print "https://www.hep.wisc.edu/~{0}/{1}".format(os.environ['USER'], htmlPath[12:])
+    print("https://www.hep.wisc.edu/~{0}/{1}".format(os.environ['USER'], htmlPath[12:]))
 else:
-    print "https://{0}.web.cern.ch/{0}/{1}".format(os.environ['USER'], htmlPath[4:])    
+    print("https://{0}.web.cern.ch/{0}/{1}".format(os.environ['USER'], htmlPath[4:]))
 
 

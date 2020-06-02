@@ -1,6 +1,7 @@
 from Utilities.prettytable import PrettyTable
-import array
+from Utilities.pyUproot import GenericHist
 import math
+
 
 BKG=0
 SIGNAL = 1
@@ -22,7 +23,7 @@ class LogFile:
         self.plotTable = PrettyTable(["Plot Group", "Weighted Events", "Error"])
         self.output = open("%s/%s_info.log" % (path,name), "w")
         self.info = info
-        self.hists = [None, None, None, None]
+        self.hists = [GenericHist()]*4
         self.callTime = ""
         self.command = ""
         self.name = name
@@ -43,20 +44,15 @@ class LogFile:
         for name, hist  in drawOrder:
             wEvents, error = self.getIntErr(hist)
             self.plotTable.add_row(sl((name, wEvents, error)))
-            self.addHist(hist, BKG)
-        self.addHist(self.getBackground(), TOTAL)
+            self.hists[BKG] += hist
             
-    def addHist(self, hist, dest):
-        if not self.hists[dest]:
-            self.hists[dest] = hist.Clone()
-        else:
-            self.hists[dest].Add(hist)
-
+        self.hists[TOTAL] += self.getBackground()
+            
     def addSignal(self, signal, groupName):
-        self.addHist(signal, SIGNAL)
+        self.hists[SIGNAL] += signal
         wEvents,error = self.getIntErr(signal)
         self.plotTable.add_row(sl((groupName, wEvents, error)))
-        self.addHist(signal, TOTAL)
+        self.hists[TOTAL] += signal
     
     def addMetaInfo(self, callTime, command):
         self.callTime = callTime
@@ -64,9 +60,9 @@ class LogFile:
 
         
     def getIntErr(self, hist):
-        error = array.array('d', [0])
-        wEvents = hist.IntegralAndError(0, hist.GetNbinsX(), error)
-        return (wEvents, error[0])
+        wEvents = sum(hist.hist)
+        error = math.sqrt(sum(hist.histErr2))
+        return (wEvents, error)
         
     def writeOut(self, isLatex=False):
         self.output.write('-'*80 + '\n')
@@ -77,20 +73,20 @@ class LogFile:
         self.output.write("Selection: %s/%s\n" % (self.info.getAnalysis(), self.info.getSelection()))
         self.output.write("Luminosity: %0.2f fb^{-1}\n" % (self.info.getLumi()/1000))
         #output.write("\nPlotting branch: %s\n" % branch_name)
-        
+
         if isLatex:
             self.output.write('\n' + self.plotTable.get_latex_string() + '\n'*2)
         else:
             self.output.write('\n' + self.plotTable.get_string() + '\n'*2)
 
-        if self.getTotalMC():
+        if not self.getTotalMC().empty():
             self.output.write("Total sum of Monte Carlo: %0.2f +/- %0.2f \n" % sl(self.getIntErr(self.getTotalMC())))
-        if self.getSignal():
+        if not self.getSignal().empty():
             self.output.write("Total sum of background Monte Carlo: %0.2f +/- %0.2f \n" % sl(self.getIntErr(self.getBackground())))
             self.output.write("Ratio S/(S+B): %0.2f +/- %0.2f \n" % sl(self.getSigBkgRatio()))
             self.output.write("Ratio S/sqrt(S+B): %0.2f +/- %0.2f \n" % sl(self.getLikelihood()))
-        if self.getData():
-            self.output.write("Number of events in data %d \n" % self.getData.Integral())
+        if not self.getData().empty():
+            self.output.write("Number of events in data %d \n" % self.getIntErr(self.getData())[0])
 
         self.output.close()                
 

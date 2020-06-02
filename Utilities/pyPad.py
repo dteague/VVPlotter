@@ -35,8 +35,11 @@ class pyPad:
         return self.down
 
     
-    def setLegend(self):
-        self.up.legend()
+    def setLegend(self, plotSpecs):
+        if "legendLoc" in plotSpecs:
+            self.up.legend(loc=plotSpecs["legendLoc"])
+        else:
+            self.up.legend()
 
     def getXaxis(self):
         if self.down:

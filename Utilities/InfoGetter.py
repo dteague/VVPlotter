@@ -92,10 +92,7 @@ class InfoGetter:
     
     def setupListOfHists(self, inFile):
         return_list = []
-        inFile.cd()
-        r.gDirectory.cd(inFile.GetListOfKeys()[0].GetName())
-        for hist in r.gDirectory.GetListOfKeys():
-            histName = hist.GetName()
+        for histName in inFile[inFile.keys()[0]].keys():
             if histName == 'sumweights':
                 continue
             baseName = histName[:histName.rfind('_')]
@@ -105,13 +102,11 @@ class InfoGetter:
 
     def setupSumWeight(self, inFile):
         return_dict = dict()
-        
-        for dir in inFile.GetListOfKeys():
-            inFile.cd()
-            r.gDirectory.cd(dir.GetName())
-            sumweight = r.gDirectory.Get('sumweights')
-            if not sumweight:  continue
-            return_dict[dir.GetName()] = sumweight.Integral()
+        for dirName, dir in inFile.items():
+            if "sumweights" not in dir:
+                print("sumweight not in {}".format(dir))
+            dirName = dirName[:-2] if dirName[-2:] == ";1" else dirName
+            return_dict[dirName] = sum(dir['sumweights'].values)
         return return_dict
 
     def setDrawStyle(self, drawStyle):

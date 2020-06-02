@@ -1,7 +1,7 @@
-import ROOT as r
 import argparse
 import os
 import time
+from Utilities.pyUproot import GenericHist
 
 def getComLineArgs():
     parser = argparse.ArgumentParser()
@@ -19,7 +19,6 @@ def getComLineArgs():
                         help="Name of the group to be made into the Signal")
     parser.add_argument("-j", type=int, default=1,
                         help="Number of cores")
-    
     parser.add_argument("-l", "--lumi", type=float, default=35.9,
                         help="Luminsoity in fb-1. Default 35.9 fb-1. "
                         "Set to -1 for unit normalization")
@@ -35,61 +34,43 @@ def getComLineArgs():
                         help="Ignore Max argument and scale max to ratio given")
     parser.add_argument("--info", type=str, default="plotInfo.py",
                         help="Name of file containing histogram Info")
-    
     return parser.parse_args()
 
 
 
 def getNormedHistos(inFile, info, histName, chan):
     groupHists = dict()
-    inFile.cd()
     
-    for dir in inFile.GetListOfKeys():
-        sample = dir.GetName()
-        r.gDirectory.cd(sample)
-        hist = r.gDirectory.Get("%s_%s" % (histName, chan))
-        if not hist: continue
-        groups = info.getGroupName(sample)
-        # if hist.Integral() <= 0:
-        #     inFile.cd()
-        #     continue
+    fullHistName = "{}_{}".format(histName, chan)
+    for sample in inFile.keys():
+        sample = sample[:-2] if sample[-2:] == ";1" else sample
+
+        if fullHistName not in inFile[sample]: continue
+        rootHist = inFile[sample][fullHistName]
+        scale = info.getXSec(sample) / info.getSumweight(sample)
         
+        hist = GenericHist(rootHist, scale)
+        if hist.empty():
+            continue
+
+        hist.addOverflow()
         if "Rebin" in info.getPlotSpec(histName):
-            hist.Rebin(info.getPlotSpec(histName)["Rebin"])
-        addOverflow(hist, info.getUpBinUser(histName))
-    
-        hist.Scale(info.getXSec(sample) / info.getSumweight(sample))
-        
-        for group in groups:
+            hist.rebin(info.getPlotSpec(histName)["Rebin"])
+
+        for group in info.getGroupName(sample):
             if group not in groupHists.keys():
-                groupHists[group] = hist.Clone()
-            else:
-                groupHists[group].Add(hist)
-        inFile.cd()
-        
+                groupHists[group] = GenericHist()
+            groupHists[group] += hist 
+            groupHists[group].name = group
+            
     for name, hist in groupHists.iteritems():
         if info.getLumi() < 0:
-            scale = 1/hist.Integral() if hist.Integral() > 0 else 1.
-            hist.Scale(scale)
+            scale = 1/sum(hist.hist)
+            hist.scale(scale)
         else:
-            hist.Scale(info.getLumi())
-        hist.SetName(name)
+            hist.scale(info.getLumi())
+        
     return groupHists
-
-def addOverflow(inHist, highRange=None):
-    lowbin = inHist.GetNbinsX()
-    highbin = lowbin + 1
-    
-    if highRange:
-        lowbin = inHist.FindBin(highRange)
-        if highRange == inHist.GetXaxis().GetBinLowEdge(lowbin): lowbin -= 1
-        extra = inHist.Integral(lowbin+1, highbin)
-    else:
-        extra = inHist.GetBinContent(highbin)
-    
-    inHist.SetBinContent(lowbin, inHist.GetBinContent(lowbin) + extra)
-    for i in range(lowbin+1, highbin+1):
-        inHist.SetBinContent(i, 0)
     
 def getDrawOrder(groupHists, drawObj, info, ex=[]):
     """Might rename: sorts histograms based on integral and returns list
@@ -98,7 +79,7 @@ def getDrawOrder(groupHists, drawObj, info, ex=[]):
     for key in drawObj:
         if key in ex: continue
         try:
-            drawTmp.append((groupHists[key].Integral(), key))
+            drawTmp.append((sum(groupHists[key].hist), key))
         except:
             print("Missing the histograms for the group %s" % key)
             exit(0)
@@ -106,24 +87,6 @@ def getDrawOrder(groupHists, drawObj, info, ex=[]):
     drawTmp.sort()
     return [(i[1], groupHists[i[1]]) for i in drawTmp]
 
-
-def getHistTotal(groupHists):
-    totalHist = None
-    for name, hist in groupHists:
-        if not totalHist:
-            totalHist = hist.Clone()
-        else:
-            totalHist.Add(hist)
-    totalHist.SetName("error")
-    return totalHist
-    
-def getMax(stack, signal=None, data=None):
-    maxHeight = stack.GetMaximum()
-    if signal:
-        maxHeight = max(maxHeight, signal.GetMaximum())
-    if data:
-        maxHeight = max(maxHeight, data.GetMaximum())
-    return maxHeight
 
 from math import log10
 def findScale(s, b):
@@ -137,21 +100,24 @@ def findScale(s, b):
             scale *= 2
     return prevS
 
+
 def findScale(ratio):
     sigNum = 10**int(log10(ratio))
     return int((ratio)/sigNum)*sigNum
+
 
 def checkOrCreateDir(path):
     if not os.path.exists(path):
         os.makedirs(path)
 
+        
 def printDrawObjAndExit(info):
     """Automatically give you drawObjs dictionary for you. Only works if drawObj=None"""
     print("you have no list of drawObjs, paste this into the code to continue\n")
     groups = info.getGroups()
     print("drawObj = {")
     for group in groups:
-        print( '           %-12s: "%s",' % ('"'+group+'"', info.getStyle(group)))
+        print( '          "%-12s": "%s",' % (group, info.getStyle(group)))
     print("}")
     exit()
 
@@ -163,16 +129,28 @@ def setupPathAndDir(analysis, drawStyle, path, chans):
         extraPath = path+'/'+extraPath
 
     if 'hep.wisc.edu' in os.environ['HOSTNAME']:
-        basePath = '%s/public_html' % (os.environ['HOME'])
+        basePath = '{}/public_html'.format(os.environ['HOME'])
     elif 'uwlogin' in os.environ['HOSTNAME'] or 'lxplus' in os.environ['HOSTNAME']:
         basePath = '/eos/home-{0:1.1s}/{0}/www'.format(os.environ['USER'])
-    basePath += '/%s/%s/%s_%s' % ('PlottingResults', analysis, extraPath, drawStyle)
+    basePath += '/PlottingResults/{}/{}_{}'.format(analysis, extraPath, drawStyle)
 
     for chan in chans:
-        if chan == "all":
-            chan = ""
-        
-        checkOrCreateDir('%s/%s' % (basePath,chan))
-        checkOrCreateDir('%s/%s/plots' % (basePath,chan))
-        checkOrCreateDir('%s/%s/logs' % (basePath,chan))
+        path = "{}/{}".format(basePath, char) if chan != "all" else basePath
+        checkOrCreateDir(path)
+        checkOrCreateDir('{}/plots'.format(path))
+        checkOrCreateDir('{}/logs'.format(path))
     return basePath
+
+
+import shutil
+def copyDirectory(src, dest):
+    if os.path.exists(dest):
+        shutil.rmtree(dest)
+    try:
+        shutil.copytree(src, dest)
+    # Directories are the same
+    except shutil.Error as e:
+        print('Directory not copied. Error: %s' % e)
+    # Any error saying that the directory doesn't exist
+    except OSError as e:
+        print('Directory not copied. Error: %s' % e)
