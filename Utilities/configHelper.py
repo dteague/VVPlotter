@@ -83,10 +83,13 @@ def getNormedHistos(inFile, info, histName, chan):
         if hist.empty():
             continue
 
-        hist.addOverflow()
+        if "setXaxis" in info.getPlotSpec(histName):
+            hist.changeAxis(info.getPlotSpec(histName)["setXaxis"])
         if "Rebin" in info.getPlotSpec(histName):
             hist.rebin(info.getPlotSpec(histName)["Rebin"])
-
+        
+        hist.addOverflow()
+        
         for group in info.getGroupName(sample):
             if group not in groupHists.keys():
                 groupHists[group] = GenericHist()

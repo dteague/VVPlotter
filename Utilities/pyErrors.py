@@ -13,8 +13,8 @@ class pyErrors:
 
         self.color = color
         self.edgecolor = self._darkenColor(self.color)
-        # self.align = 'left' if isMult else "mid"
-        self.align = 'mid'
+        self.align = 'left' if isMult else "mid"
+        # self.align = 'mid'
 
         if not isinstance(hist, GenericHist):
             hist = GenericHist(hist)

@@ -84,12 +84,46 @@ class GenericHist:
         self.histErr2[0] += self.underflow[1]
         self.underflow = np.array([0., 0.])
 
+    def changeAxis(self, newRange):
+        lowIdx = 0
+        highIdx = self.bins.size
+        for i, val in enumerate(self.bins):
+            if val <= newRange[0]:
+                lowIdx = i
+            if val >= newRange[1]:
+                highIdx = i
+                break
+        self.changeAxisIndex(lowIdx, highIdx)
+
+    def changeAxisIndex(self, lowIdx, highIdx):
+        self.bins = self.bins[lowIdx:highIdx+1]
+        self.overflow[0] += sum(self.hist[highIdx:])
+        self.overflow[1] += sum(self.histErr2[highIdx:])
+        self.underflow[0] += sum(self.hist[:lowIdx])
+        self.underflow[1] += sum(self.histErr2[:lowIdx])
+        self.hist = self.hist[lowIdx:highIdx]
+        self.histErr2 = self.histErr2[lowIdx:highIdx]
+        
+            
     def rebin(self, rebin):
         size = len(self.hist)
-        if size // rebin != size / rebin:
-            print("bad rebinning! Rebin {} but size is {}".format(rebin, size))
+        subSize = size//rebin
+        newSize = subSize * rebin
+        if newSize == 0:
+            print("New binning is too fine:")
+            print("Rebin: {}, Old # bins: {}".format(rebin, size))
             raise Exception
-        self.hist = np.sum(self.hist.reshape(rebin, size / rebin), axis=1)
-        self.histErr2 = np.sum(self.histErr2.reshape(rebin, size / rebin),
-                               axis=1)
-        self.bins = self.bins[::size / rebin]
+        if float(newSize)/size < 0.95:
+            while float(newSize)/size < 0.975:
+                rebin -= 1
+                subSize = size//rebin
+                newSize = subSize * rebin
+            # print("New binning is too fine, losing many bins:")
+            print("Rebin: {}, Old # bins: {}, ratio: {}".format(rebin, size, float(newSize)/size))
+            
+            return
+        
+        self.changeAxisIndex(0, newSize)
+        self.hist = np.sum(self.hist.reshape(rebin, subSize), axis=1)
+        self.histErr2 = np.sum(self.histErr2.reshape(rebin, subSize), axis=1)
+        self.bins = self.bins[::subSize]
