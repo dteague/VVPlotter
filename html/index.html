@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <style type="text/css">
+      .top h1 {
+          font-weight: Bold;
+          font-size: 35px;
+          text-align: center;
+          margin: 0;
+      }
+      .top h2 {
+          font-weight: lighter;
+          font-size: 20px;
+          text-align: center;
+          margin: 0;
+      }
+      .autoResizeImage {
+          max-width: 100%;
+          height: auto;
+          width: auto;
+      }
+    </style>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
+    <script type="text/javascript" src="resize.js"></script>
+  </head>
+
+  <div id="title" class="top" style="text-align: center;"><script>getTitle();</script>
+    <a href="..">[back]</a>
+  </div>
+  <br>
+  <div id="channels" class="top" style="text-align: center;"><script>getChannels();</script></div>
+
+  <body onresize="dynamicSizing()">
+    <table><tbody id="picTable"><script>dynamicSizing();</script></tbody></table>
+  </body>
+</html>

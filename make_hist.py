@@ -74,7 +74,6 @@ else:
     info.setLumi(args.lumi * 1000)
 
 info.setDrawStyle(args.drawStyle)
-
 if not drawObj:
     config.printDrawObjAndExit(info)
 
@@ -95,7 +94,6 @@ for histName in info.getListOfHists():
     if not info.isInPlotSpec(histName):
         continue
     argList.append((histName, info, basePath, args.infile, channels))
-
 
 def makePlot(histName, info, basePath, infileName, channels):
     print("Processing {}".format(histName))
@@ -186,7 +184,7 @@ def makePlot(histName, info, basePath, infileName, channels):
         fig = plt.gcf()
         fig.set_size_inches(8, 8)
 
-        if chan == "all":
+        if chan == "all" or len(channels) == 1:
             chan = ""
         baseChan = "{}/{}".format(basePath, chan)
         plotBase = "{}/plots/{}".format(baseChan, histName)
@@ -210,7 +208,6 @@ def makePlot(histName, info, basePath, infileName, channels):
 def makePlotStar(args):
     makePlot(*args)
 
-
 import multiprocessing as mp
 if args.j > 1:
     pool = mp.Pool(args.j)
@@ -225,11 +222,7 @@ try:
     channels.remove("all")
 except ValueError:
     if len(channels) == 1:
-        baseChan = "{}/{}".format(basePath, channels[0])
-        config.copyDirectory("{}/plots".format(baseChan),
-                             "{}/plots".format(basePath))
-        config.copyDirectory("{}/logs".format(baseChan),
-                             "{}/logs".format(basePath))
+        channels = []
     else:
         print("No all channel")
 
@@ -241,7 +234,9 @@ userName = os.environ['USER']
 htmlPath = basePath[basePath.index(userName) + len(userName) + 1:]
 if 'hep.wisc.edu' in os.environ['HOSTNAME']:
     print("https://www.hep.wisc.edu/~{0}/{1}".format(os.environ['USER'],
-                                                     htmlPath[12:]))
+                                                         htmlPath[4:]))
 else:
     print("https://{0}.web.cern.ch/{0}/{1}".format(os.environ['USER'],
                                                    htmlPath[4:]))
+
+

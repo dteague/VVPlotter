@@ -2,75 +2,22 @@
 """
   Modified from T. Ruggles and D. Taylor, U. Wisconsin
 """
-import glob
-import imghdr
 import argparse
+import shutil
+import xml.etree.ElementTree as ET
 
 def writeHTML(path, name, channels=[]):
-    image_files = [x for x in glob.glob(path + "/plots/*.*") if imghdr.what(x)]
-    with open('%s/index.html' % path, 'w') as index:
-        index = open('%s/index.html' % path, 'w')
-        index.write('<html>\n'
-            '<head>\n'
-            '  <title>{title}</title>\n'
-            '  <style type="text/css">\n'
-            '    .autoResizeImage {{\n'
-            '      max-width: 100%;\n'
-            '      height: auto;\n'
-            '      width: auto;\n'
-            '   }}\n'
-            '   </style>\n'
-            '</head>\n'
-            '<body>\n'.format(title=name)
-        )
-        index.write('  <div style="text-align: center;"><b>{title}</b>\n'
-                    '<br/><a href="..">[back]</a>'
-                    '</div>\n'
-                    
-                '  <table>\n'.format(title=name)
-        )
-        if channels:
-            index.write('  <div style="text-align: center;">Plots by channel: \n <br/> \n')
-            for chan in channels:
-                index.write('  <a href="{0}">[{0}]</a> - \n'.format(chan))
-            
-            index.write('</div>\n'
-                    '  <table>\n')
+    info = ET.Element("Info")
+    ET.SubElement(info, "Title").text = name
+    for chan in channels:
+        ET.SubElement(info, "Channel").text = chan
+    tree = ET.ElementTree(info)
+    tree.write('{}/extraInfo.xml'.format(path))
 
-                    
-        for i, image_file in enumerate(image_files):
-            file_name = image_file.strip().split('/')[-1].strip() 
-            if i % 3 == 0: 
-                index.write('  <tr style="text-align: center;">\n')
-            index.write(getTableRow(image_file.split("/")[-1]))
-            if (i+1) % 3 == 0: 
-                index.write('  </tr>\n')
-                
-        index.write( '</body>\n'
-                '</html>' )
-        
-def getTableRow(image_file):
-    return '''    <td style="text-align: center;">
-        <img src="plots/{image}" class="autoResizeImage" /><br/>
-        <a href="logs/{name}_info.log">[log]</a> - 
-        <a href="plots/{name}.pdf">[pdf]</a>
-    </td>\n'''.format(image=image_file, name=image_file.split(".")[-2])
+    shutil.copyfile("./html/resize.js", "{}/resize.js".format(path))
+    shutil.copyfile("./html/index.html", "{}/index.html".format(path))
+    return
     
-
-def getTableRowTest(full_path):
-    idx = full_path.rfind('/')
-    image = full_path[idx+1:]
-    imageName= image[:-4]
-    dir = full_path[:idx]
-    str =  '<td style="text-align: center;">\n' \
-        '<img src="plots/{image}" class="autoResizeImage" /><br/>\n'.format(image=image)
-    if glob.glob("%s/logs/%s_info.log" % (dir, imageName)):
-        str += "<a href=\"logs/{name}_info.log\">[log]</a>   \n".format(name=imageName)
-    if glob.glob("%s/plots/%s.pdf" % (dir, imageName)):
-        str += "<a href=\"logs/{name}.pdf\">[pdf]</a> \n".format(name=imageName)
-    str += "</td>\\n\n"
-    return str
-
 
 
 if __name__ == "__main__":
