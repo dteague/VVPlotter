@@ -47,10 +47,12 @@ function dynamicSizing() {
 
 function getChannels() {
     var chans = getListOfFiles('/extraInfo.xml', "Channel");
+    var channelHolder = document.getElementById("channels");
+    channelHolder.innerHTML = "";
     if(chans.length <= 1) {
         return;
     }
-    var channelHolder = document.getElementById("channels");
+    
     var chanTitle = document.createElement("h2");
     chanTitle.innerHTML = "Plots by Channel:<br>"
     channelHolder.appendChild(chanTitle);
@@ -69,6 +71,7 @@ function getChannels() {
 
 function getTitle() {
     var titleArr = getListOfFiles('/extraInfo.xml', "Title");
+    document.getElementById("title").innerHTML = "";
     
     var title = document.createElement("h1");
     title.innerHTML = titleArr[0]

@@ -14,8 +14,10 @@ def writeHTML(path, name, channels=[]):
     tree = ET.ElementTree(info)
     tree.write('{}/extraInfo.xml'.format(path))
 
+    shutil.copyfile("./html/jquery.min.js", "{}/jquery.min.js".format(path))
     shutil.copyfile("./html/resize.js", "{}/resize.js".format(path))
     shutil.copyfile("./html/index.html", "{}/index.html".format(path))
+        
     return
     
 
