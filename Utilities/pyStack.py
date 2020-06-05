@@ -15,7 +15,10 @@ class pyStack():
         self.title = drawOrder[0][1].name
         self.hists = list()
         self.histTotal = GenericHist()
-        self.align = 'left' if isMult else "mid"
+        if isMult:
+            self.bins = self.bins - 0.5
+        #self.align = 'left' if isMult else "mid"
+        self.align = "mid"
         self.title = None
         self.options = {"stacked": True, "histtype": "stepfilled"}
 

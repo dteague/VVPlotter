@@ -9,8 +9,10 @@ class pyHist:
         self.name = name
         self.hist = hist
         self.color = color
-        self.align = 'left' if isMult else "mid"
-
+        #self.align = 'left' if isMult else "mid"
+        self.align = 'mid'
+        
+        
         if '\\' in self.name:
             self.name = r'$%s$' % self.name
 
@@ -18,7 +20,9 @@ class pyHist:
             hist = GenericHist(hist)
 
         self.setupTH1(hist, isMult)
-
+        if isMult:
+            self.xbins = self.xbins - 0.5
+        
     def setupTH1(self, rootHist, isMult):
         self.xbins = rootHist.bins
         self.y = rootHist.hist

@@ -106,6 +106,7 @@ class GenericHist:
         
             
     def rebin(self, rebin):
+        origRebin = rebin
         size = len(self.hist)
         subSize = size//rebin
         newSize = subSize * rebin
@@ -113,17 +114,16 @@ class GenericHist:
             print("New binning is too fine:")
             print("Rebin: {}, Old # bins: {}".format(rebin, size))
             raise Exception
-        if float(newSize)/size < 0.95:
+        elif float(newSize)/size < 0.95:
             while float(newSize)/size < 0.975:
                 rebin -= 1
                 subSize = size//rebin
                 newSize = subSize * rebin
-            # print("New binning is too fine, losing many bins:")
-            print("Rebin: {}, Old # bins: {}, ratio: {}".format(rebin, size, float(newSize)/size))
             
-            return
-        
         self.changeAxisIndex(0, newSize)
         self.hist = np.sum(self.hist.reshape(rebin, subSize), axis=1)
         self.histErr2 = np.sum(self.histErr2.reshape(rebin, subSize), axis=1)
         self.bins = self.bins[::subSize]
+
+        return (origRebin, rebin)
+        

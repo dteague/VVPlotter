@@ -70,7 +70,7 @@ def getComLineArgs():
 
 def getNormedHistos(inFile, info, histName, chan):
     groupHists = dict()
-
+    oldRebin = None
     fullHistName = "{}_{}".format(histName, chan)
     for sample in inFile.keys():
         sample = sample[:-2] if sample[-2:] == ";1" else sample
@@ -86,7 +86,7 @@ def getNormedHistos(inFile, info, histName, chan):
         if "setXaxis" in info.getPlotSpec(histName):
             hist.changeAxis(info.getPlotSpec(histName)["setXaxis"])
         if "Rebin" in info.getPlotSpec(histName):
-            hist.rebin(info.getPlotSpec(histName)["Rebin"])
+            oldRebin, newRebin = hist.rebin(info.getPlotSpec(histName)["Rebin"])
         
         hist.addOverflow()
         
@@ -96,6 +96,9 @@ def getNormedHistos(inFile, info, histName, chan):
             groupHists[group] += hist
             groupHists[group].name = group
 
+    if oldRebin and oldRebin - newRebin > 5:
+        print("Large change in rebin for {}: {} to {}".format(histName, oldRebin, newRebin))
+            
     for name, hist in groupHists.iteritems():
         if info.getLumi() < 0:
             scale = 1 / sum(hist.hist)
@@ -167,14 +170,16 @@ def setupPathAndDir(analysis, drawStyle, path, chans):
 
     if 'hep.wisc.edu' in os.environ['HOSTNAME']:
         basePath = '{}/public_html'.format(os.environ['HOME'])
-    elif 'uwlogin' in os.environ['HOSTNAME'] or 'lxplus' in os.environ[
-            'HOSTNAME']:
+    elif 'uwlogin' in os.environ['HOSTNAME'] or 'lxplus' in os.environ['HOSTNAME']:
         basePath = '/eos/home-{0:1.1s}/{0}/www'.format(os.environ['USER'])
     basePath += '/PlottingResults/{}/{}_{}'.format(analysis, extraPath,
                                                    drawStyle)
-
+    # for all directory
+    checkOrCreateDir('{}/plots'.format(basePath))
+    checkOrCreateDir('{}/logs'.format(basePath))
     for chan in chans:
-        path = "{}/{}".format(basePath, chan) if chan != "all" else basePath
+        if "all": continue
+        path = "{}/{}".format(basePath, chan)
         checkOrCreateDir(path)
         checkOrCreateDir('{}/plots'.format(path))
         checkOrCreateDir('{}/logs'.format(path))
