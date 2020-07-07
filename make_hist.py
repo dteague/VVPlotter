@@ -60,14 +60,11 @@ drawObj = {
     # "ttt_201X"      : "cornflowerblue",
 }
 
-# In out
-inFile = uproot.open(args.infile)
-
 anaSel = args.analysis.split('/')
 if len(anaSel) == 1:
     anaSel.append('')
 
-info = InfoGetter(anaSel[0], anaSel[1], inFile, args.info)
+info = InfoGetter(anaSel[0], anaSel[1], args.infile, args.info)
 if args.drawStyle == "compare":
     info.setLumi(-1)
 else:
@@ -109,13 +106,14 @@ def makePlot(histName, info, basePath, infileName, channels):
 
         exclude = []
         # signal
+        
         if signalName in groupHists:
             signal = pyHist(info.getLegendName(signalName),
                             groupHists[signalName],
                             drawObj[signalName],
                             isMult=isDcrt)
             exclude.append(signalName)
-
+        
         # data
         if False:
             data = pyHist("Data", groupHists['data'], 'black', isMult=isDcrt)

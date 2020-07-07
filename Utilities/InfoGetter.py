@@ -2,49 +2,35 @@ import os
 import json
 import imp
 import glob
-import ROOT as r
-
+import uproot
 
 class InfoGetter:
-    def __init__(self, analysis, selection, inFile, plotInfo="plotInfo.py"):
+    def __init__(self, analysis, selection, infilename, plotInfo="plotInfo.py"):
         try:
             adm_path = os.environ['ADM_PATH']
         except:
-            print(
-                'The Analysis Dataset Manager is found by the variable ADM_PATH'
-            )
-            print(
-                'Please set this path and consider setting it in your .bashrc')
+            print('The Analysis Dataset Manager is found by the variable ADM_PATH')
+            print('Please set this path and consider setting it in your .bashrc')
             exit(1)
         #adm_path = '
 
+        inFile = uproot.open(infilename)
         self.analysis = analysis
         self.selection = selection
-        self.groupInfo = self.readAllInfo("%s/PlotGroups/%s.py" %
-                                          (adm_path, analysis))
+        self.groupInfo = self.readAllInfo("{}/PlotGroups/{}.py"
+                                          .format(adm_path, analysis))
         self.mcInfo = self.readAllInfo(
-            "%s/FileInfo/montecarlo/montecarlo_2016.py" % adm_path)
+            "{}/FileInfo/montecarlo/montecarlo_2016.py".format(adm_path))
         self.member2GroupMap = self.setupMember2GroupMap()
         self.listOfHists = self.setupListOfHists(inFile)
         self.sumweights = self.setupSumWeight(inFile)
         self.plotSpecs = self.readAllInfo(plotInfo)
         self.lumi = 35900  #default
-
+        
         # if os.path.isfile("%s/PlotObjects/%s/%s.json" % (adm_path, analysis, selection)):
         #     self.objectInfo = self.readAllInfo("%s/PlotObjects/%s/%s.json" % (adm_path, analysis, selection))
         # else:
         #     self.objectInfo = self.readAllInfo("%s/PlotObjects/%s.json" % (adm_path, analysis))
-
-
-##################################
-#  _   _      _                  #
-# | | | | ___| |_ __   ___ _ __  #
-# | |_| |/ _ \ | '_ \ / _ \ '__| #
-# |  _  |  __/ | |_) |  __/ |    #
-# |_| |_|\___|_| .__/ \___|_|    #
-#              |_|               #
-##################################
-
     def readAllInfo(self, file_path):
         info = {}
         for info_file in glob.glob(file_path):
@@ -118,15 +104,7 @@ class InfoGetter:
     def setDrawStyle(self, drawStyle):
         if drawStyle == "compare":
             self.lumi = -1
-
-    #####################################
-    #   ____      _   _                 #
-    #  / ___| ___| |_| |_ ___ _ __ ___  #
-    # | |  _ / _ \ __| __/ _ \ '__/ __| #
-    # | |_| |  __/ |_| ||  __/ |  \__ \ #
-    #  \____|\___|\__|\__\___|_|  |___/ #
-    #####################################
-
+            
     def getListOfHists(self):
         return self.listOfHists
 
@@ -174,14 +152,6 @@ class InfoGetter:
             return self.plotSpecs[histName]["isMultiplicity"]
         else:
             return False
-
-    #################################
-    #  ____       _   _             #
-    # / ___|  ___| |_| |_ ___ _ __  #
-    # \___ \ / _ \ __| __/ _ \ '__| #
-    #  ___) |  __/ |_| ||  __/ |    #
-    # |____/ \___|\__|\__\___|_|    #
-    #################################
-
+        
     def setLumi(self, lumi):
         self.lumi = lumi

@@ -2,7 +2,7 @@ from Utilities.pyUproot import GenericHist
 
 from matplotlib import colors as clr
 import numpy as np
-
+from copy import deepcopy
 
 class pyStack():
     def __init__(self, drawOrder, isMult=False):
@@ -24,7 +24,7 @@ class pyStack():
 
         for name, hist in drawOrder:
             self.names.append(name)
-            self.hists.append(hist)
+            self.hists.append(deepcopy(hist))
             self.stack.append(hist.hist)
             self.histTotal += hist
 

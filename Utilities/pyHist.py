@@ -2,12 +2,12 @@ import numpy as np
 from matplotlib import colors
 from Utilities.pyUproot import GenericHist
 import math
-
+from copy import deepcopy
 
 class pyHist:
     def __init__(self, name, hist, color, isTH1=True, isMult=False):
         self.name = name
-        self.hist = hist
+        self.hist = deepcopy(hist)
         self.color = color
         #self.align = 'left' if isMult else "mid"
         self.align = 'mid'
@@ -16,10 +16,10 @@ class pyHist:
         if '\\' in self.name:
             self.name = r'$%s$' % self.name
 
-        if not isinstance(hist, GenericHist):
-            hist = GenericHist(hist)
+        if not isinstance(self.hist, GenericHist):
+            self.hist = GenericHist(hist)
 
-        self.setupTH1(hist, isMult)
+        self.setupTH1(self.hist, isMult)
         if isMult:
             self.xbins = self.xbins - 0.5
         
