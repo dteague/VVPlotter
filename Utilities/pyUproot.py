@@ -10,22 +10,21 @@ class GenericHist:
 
         if len(args) == 0:
             return
-
         hist = args[0]
         from ROOT import TGraphAsymmErrors
         if isinstance(hist, TGraphAsymmErrors):
             self.setupTGraph(hist)
         else:
             scale = 1 if len(args) == 1 else args[1]
-            if np.array(hist.fSumw2).size == 0:
+            if np.array(hist._fSumw2).size == 0:
                 return
-            self.hist = scale * np.array(hist.numpy[0])
-            self.bins = np.array(hist.numpy[1])
-            self.histErr2 = scale**2 * np.array(hist.fSumw2[1:-1])
+            self.hist = scale * np.array(hist.numpy()[0])
+            self.bins = np.array(hist.numpy()[1])
+            self.histErr2 = scale**2 * np.array(hist._fSumw2[1:-1])
             self.underflow = np.array(
-                [scale * hist.underflows, scale**2 * hist.fSumw2[0]])
+                [scale * hist.underflows, scale**2 * hist._fSumw2[0]])
             self.overflow = np.array(
-                [scale * hist.overflows, scale**2 * hist.fSumw2[-1]])
+                [scale * hist.overflows, scale**2 * hist._fSumw2[-1]])
 
     def __add__(self, other):
         if self.empty():
@@ -127,3 +126,10 @@ class GenericHist:
 
         return (origRebin, rebin)
         
+    def integral(self):
+        return sum(self.hist)
+
+    def getMyTH1(self):
+        full_hist = np.concatenate(([self.underflow[0]], self.hist, [self.overflow[0]]))
+        full_hist_err2 = np.concatenate(([self.underflow[1]], self.histErr2, [self.overflow[1]]))
+        return (self.bins[0], self.bins[-1], full_hist, full_hist_err2)

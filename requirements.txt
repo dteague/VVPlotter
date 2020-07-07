@@ -1,0 +1,2 @@
+uproot==3.11.6
+uproot_methods

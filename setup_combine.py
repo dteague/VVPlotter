@@ -1,0 +1,106 @@
+import sys
+import os
+import numpy as np
+import uproot
+import Utilities.configHelper as config
+from Utilities.Systematic_Combine import Systematic
+from Utilities.InfoGetter import InfoGetter
+from Utilities.UprootWriter import get_hist
+
+#plot_groups = ["ttt", "tttt", "ttz", "ttw", "tth", "ttXY", "xg", "other", "rare"]
+plot_groups = ["ttt", "ttz", "ttw", "tth", "ttXY", "xg", "other", "rare"]
+fitvar = "HT"
+channels = ["SS"]
+
+out_folder = "relaxed_Cuts"
+
+
+systematics = [["lumi2016_13TeV", "lnN", [(1.025)]],
+               ["CMS_norm_tttt", "lnN",  [("tttt", 1.5)]],
+               ["CMS_norm_ttw", "lnN",   [("ttw", 1.4)]],
+               ["CMS_norm_ttz", "lnN",   [("ttz", 1.4)]],
+               ["CMS_norm_tth", "lnN",   [("tth", 1.25)]],
+               ["CMS_norm_xg", "lnN",    [("xg", 1.5)]],
+               ["CMS_norm_rare", "lnN",  [("rare", 1.5)]],
+]
+
+# Start of funtions
+
+def write_card(outname, fitvar, rate_list, syst_list):
+    with open(outname, 'w') as f:
+        f.write("imax {}  number of channels\n".format(len(channels)))
+        f.write("jmax {}  number of backgrounds plus signals minus 1\n"
+                .format(len(plot_groups) - 1))
+        f.write("kmax {} number of nuisance parameters (sources of systematical uncertainties)\n"
+                .format(len(syst_list)))
+        f.write("------------\n\n")
+
+        rootpath = os.path.abspath(outname.replace("txt", "root"))
+        for group in plot_groups:
+            f.write("shapes {0}\t* {1} {0}_{2}_$CHANNEL\t{0}_{2}_$SYSTEMATIC_$CHANNEL\n"
+                    .format(group, rootpath, fitvar))
+
+        f.write("\nshapes data_obs\t* {1} {0}_{2}_$CHANNEL\t{0}_{2}_$SYSTEMATIC_$CHANNEL\n\n"
+                .format("ttt", rootpath, fitvar))  # need to create data
+        f.write("bin\t\tall\n")
+        f.write("observation\t-1\n\n")
+        f.write("------------\n")
+        f.write("""
+        # now we list the expected events for signal and all backgrounds in that bin
+        # the second 'process' line must have a positive number for backgrounds, and 0 for signal
+        # then we list the independent sources of uncertainties, and give their effect (syst. error)
+        # on each process and bin\n""")
+
+        f.write("bin")
+        for chan in channels:
+            f.write("\t{}".format(chan)*len(plot_groups))
+            f.write("\nprocess\t")
+            f.write(("\t".join(plot_groups)+"\t")*len(channels))
+            f.write("\nprocess\t")
+            f.write(("\t".join(np.arange(len(plot_groups)).astype(str))+"\t")
+                    *len(channels))
+            f.write("\nrate\t" + "\t".join(rate_list.astype(str)))
+
+        f.write("\n" + "-"*80 + "\n")
+        for syst in syst_list:
+            f.write(syst.output() + "\n")
+
+        f.write("\n* autoMCStats 1")
+
+
+def main(args):
+    anaSel = args.analysis.split('/')
+    if len(anaSel) == 1:
+        anaSel.append('')
+
+    info = InfoGetter(anaSel[0], anaSel[1], args.infile)
+    info.setLumi(args.lumi * 1000)
+
+    syst_list = list()
+    Systematic.groups = plot_groups
+    Systematic.chans = channels
+    for syst in systematics:
+        syst_list.append(Systematic(syst[0], syst[1]))
+        syst_list[-1].add_syst_info(syst[2])
+
+    config.checkOrCreateDir(out_folder)
+    outname = "{}/{}_{}.txt".format(out_folder, anaSel[0], fitvar)
+    
+    inFile = uproot.open(args.infile)
+    outFile = uproot.recreate(outname.replace(".txt", ".root"))
+    rates = list()
+    
+    for chan in channels:
+        groupHists = config.getNormedHistos(inFile, info, fitvar, chan)
+        for group in plot_groups:
+            rates.append(groupHists[group].integral())
+            outFile["{}_{}_{}".format(group, fitvar, chan)] = get_hist(groupHists[group])
+    rates = np.array(rates)
+    outFile.close()
+    inFile.close()
+    
+    write_card(outname, fitvar, rates, syst_list)
+
+if __name__ == "__main__":
+    args = config.getComLineArgs()
+    main(args)

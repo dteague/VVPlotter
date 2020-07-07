@@ -108,10 +108,8 @@ def makePlot(histName, info, basePath, infileName, channels):
         # signal
         
         if signalName in groupHists:
-            signal = pyHist(info.getLegendName(signalName),
-                            groupHists[signalName],
-                            drawObj[signalName],
-                            isMult=isDcrt)
+            signal = pyHist(info.getLegendName(signalName), groupHists[signalName],
+                            drawObj[signalName], isMult=isDcrt)
             exclude.append(signalName)
         
         # data
@@ -119,17 +117,11 @@ def makePlot(histName, info, basePath, infileName, channels):
             data = pyHist("Data", groupHists['data'], 'black', isMult=isDcrt)
             exclude.append('data')
 
-        drawOrder = config.getDrawOrder(groupHists,
-                                        drawObj,
-                                        info,
-                                        ex=[signalName])
+        drawOrder = config.getDrawOrder(groupHists, drawObj, info, ex=[signalName])
         stacker = pyStack(drawOrder, isMult=isDcrt)
         stacker.setColors(drawObj)
         stacker.setLegendNames(info)
-        error = pyErrors("Stat Errors",
-                         stacker.getHist(),
-                         "plum",
-                         isMult=isDcrt)
+        error = pyErrors("Stat Errors", stacker.getHist(), "plum", isMult=isDcrt)
         if signal:
             scale = config.findScale(np.sum(stacker.stack) / sum(signal.y))
             #scale = config.findScale(max(signal.y), stacker.getRHist().GetMaximum())
@@ -140,15 +132,8 @@ def makePlot(histName, info, basePath, infileName, channels):
                                          "pois")
             stack_divide = r.TGraphAsymmErrors(stacker.getRHist(),
                                                stacker.getRHist(), "pois")
-            ratio = pyHist("Ratio",
-                           divide,
-                           "black",
-                           isTH1=False,
-                           isMult=isDcrt)
-            band = pyErrors("Ratio",
-                            stack_divide,
-                            "plum",
-                            isTH1=False,
+            ratio = pyHist("Ratio", divide, "black", isTH1=False, isMult=isDcrt)
+            band = pyErrors("Ratio", stack_divide, "plum", isTH1=False,
                             isMult=isDcrt)
 
         # Extra options
