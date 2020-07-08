@@ -26,6 +26,11 @@ systematics = [["lumi2016_13TeV", "lnN", [(1.025)]],
 
 # Start of funtions
 
+def get_com_args():
+    parser = config.get_generic_args()
+    return parser.parse_args()
+    
+
 def write_card(outname, fitvar, rate_list, syst_list):
     with open(outname, 'w') as f:
         f.write("imax {}  number of channels\n".format(len(channels)))
@@ -35,15 +40,15 @@ def write_card(outname, fitvar, rate_list, syst_list):
                 .format(len(syst_list)))
         f.write("------------\n\n")
 
-        rootpath = os.path.abspath(outname.replace("txt", "root"))
+        rootpath = os.path.abspath(outname.replace("card.txt", "hists.root"))
         for group in plot_groups:
             f.write("shapes {0}\t* {1} {0}_{2}_$CHANNEL\t{0}_{2}_$SYSTEMATIC_$CHANNEL\n"
                     .format(group, rootpath, fitvar))
 
         f.write("\nshapes data_obs\t* {1} {0}_{2}_$CHANNEL\t{0}_{2}_$SYSTEMATIC_$CHANNEL\n\n"
                 .format("ttt", rootpath, fitvar))  # need to create data
-        f.write("bin\t\tall\n")
-        f.write("observation\t-1\n\n")
+        f.write("bin" + "\t".join(channels))
+        f.write("\nobservation\t-1\n\n")
         f.write("------------\n")
         f.write("""
         # now we list the expected events for signal and all backgrounds in that bin
@@ -84,10 +89,10 @@ def main(args):
         syst_list[-1].add_syst_info(syst[2])
 
     config.checkOrCreateDir(out_folder)
-    outname = "{}/{}_{}.txt".format(out_folder, anaSel[0], fitvar)
+    outname = "{}/{}_{}_card.txt".format(out_folder, anaSel[0], fitvar)
     
     inFile = uproot.open(args.infile)
-    outFile = uproot.recreate(outname.replace(".txt", ".root"))
+    outFile = uproot.recreate(outname.replace("card.txt", "hists.root"))
     rates = list()
     
     for chan in channels:

@@ -4,38 +4,25 @@ import time
 from Utilities.pyUproot import GenericHist
 
 
-def getComLineArgs():
+def get_generic_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("-i", "--infile", type=str, required=True,
                         help="Input root file (output of makeHistFile.py)")
     parser.add_argument("-a", "--analysis", type=str, required=True,
                         help="Specificy analysis used")
     parser.add_argument("-p", "--path", type=str, default='',
-                        help="Extra path (defaults to day)")
-    parser.add_argument("--drawStyle", type=str, default='stack',
-                        help='Way to draw graph',
-                        choices=['stack', 'compare', 'sigratio'])
-    parser.add_argument("-c", "--channels", type=str,
-                        default="all", help="List (separate by commas) of channels to plot")
-    parser.add_argument("-sig", "--signal", type=str, default='',
-                        help="Name of the group to be made into the Signal")
+                        help="Path for output")
+    parser.add_argument("-c", "--channels", type=str, default="all",
+                        help="List (separate by commas) of channels to plot")
     parser.add_argument("-j", type=int, default=1, help="Number of cores")
     parser.add_argument("-l", "--lumi", type=float, default=35.9,
                         help="Luminsoity in fb-1. Default 35.9 fb-1. "
                         "Set to -1 for unit normalization")
-    parser.add_argument("--logy", action='store_true',
-                        help="Use logaritmic scale on Y-axis")
-    parser.add_argument("--stack_signal", action='store_true',
-                        help="Stack signal hists on top of background")
-    parser.add_argument("--ratio_range", nargs=2, default=[0.4, 1.6],
-                        help="Ratio min ratio max (default 0.5 1.5)")
-    parser.add_argument("--no_ratio", action="store_true",
-                        help="Do not add ratio comparison")
-    parser.add_argument("--autoScale", type=float, default=-1.,
-                        help="Ignore Max argument and scale max to ratio given")
+    # parser.add_argument("--autoScale", type=float, default=-1.,
+    #                     help="Ignore Max argument and scale max to ratio given")
     parser.add_argument("--info", type=str, default="plotInfo.py",
                         help="Name of file containing histogram Info")
-    return parser.parse_args()
+    return parser
 
 
 def getNormedHistos(inFile, info, histName, chan):

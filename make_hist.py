@@ -1,6 +1,25 @@
 #!/usr/bin/env python
 import Utilities.configHelper as config
-args = config.getComLineArgs()
+
+
+def get_com_args():
+    parser = config.get_generic_args()
+    parser.add_argument("--drawStyle", type=str, default='stack',
+                        help='Way to draw graph',
+                        choices=['stack', 'compare', 'sigratio'])
+    parser.add_argument("-sig", "--signal", type=str, default='',
+                        help="Name of the group to be made into the Signal")
+    parser.add_argument("--logy", action='store_true',
+                        help="Use logaritmic scale on Y-axis")
+    parser.add_argument("--stack_signal", action='store_true',
+                        help="Stack signal hists on top of background")
+    parser.add_argument("--ratio_range", nargs=2, default=[0.4, 1.6],
+                        help="Ratio min ratio max (default 0.5 1.5)")
+    parser.add_argument("--no_ratio", action="store_true",
+                        help="Do not add ratio comparison")
+    return parser.parse_args()
+
+args = get_com_args()
 
 # need args before or root takes over "--help"
 import os
