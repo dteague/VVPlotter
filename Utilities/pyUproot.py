@@ -1,31 +1,26 @@
 import numpy as np
 from copy import deepcopy
-
+from scipy.stats import beta
 
 class GenericHist:
     def __init__(self, *args):
-
         self.bins = None
         self.name = None
-
         if len(args) == 0:
             return
         hist = args[0]
-        from ROOT import TGraphAsymmErrors
-        if isinstance(hist, TGraphAsymmErrors):
-            self.setupTGraph(hist)
-        else:
-            scale = 1 if len(args) == 1 else args[1]
-            if np.array(hist._fSumw2).size == 0:
-                return
-            self.hist = scale * np.array(hist.numpy()[0])
-            self.bins = np.array(hist.numpy()[1])
-            self.histErr2 = scale**2 * np.array(hist._fSumw2[1:-1])
-            self.underflow = np.array(
-                [scale * hist.underflows, scale**2 * hist._fSumw2[0]])
-            self.overflow = np.array(
-                [scale * hist.overflows, scale**2 * hist._fSumw2[-1]])
+        
+        if np.array(hist._fSumw2).size == 0:
+            return
+        self.hist = np.array(hist.numpy()[0])
+        self.bins = np.array(hist.numpy()[1])
+        self.histErr2 = np.array(hist._fSumw2[1:-1])
+        self.underflow = np.array([hist.underflows, hist._fSumw2[0]])
+        self.overflow = np.array([hist.overflows, hist._fSumw2[-1]])
+        if len(args) == 2:
+            self.scale(args[1])
 
+        
     def __add__(self, other):
         if self.empty():
             return deepcopy(other)
@@ -40,25 +35,20 @@ class GenericHist:
         returnHist.name = self.name
         return returnHist
 
+    def copy(self):
+        return deepcopy(self)
+    
     def scale(self, scale):
         self.hist *= scale
         self.histErr2 *= scale**2
         self.underflow *= scale
         self.overflow *= scale
+        self.underflow[1] *= scale
+        self.overflow[1] *= scale
 
     def empty(self):
         return self.bins is None
-
-    def getTH1(self):
-        from ROOT import TH1D
-        rHist = TH1D(self.name, self.name, len(self.bins) - 1, self.bins)
-        i = 1
-        for val, err in zip(self.hist, np.sqrt(self.histErr2)):
-            rHist.SetBinContent(i, val)
-            rHist.SetBinError(i, err)
-            i += 1
-        return rHist
-
+    
     def setupTGraph(self, graph):
         self.hist = np.array(graph.GetY())
         self.histErr2 = list()
@@ -133,3 +123,25 @@ class GenericHist:
         full_hist = np.concatenate(([self.underflow[0]], self.hist, [self.overflow[0]]))
         full_hist_err2 = np.concatenate(([self.underflow[1]], self.histErr2, [self.overflow[1]]))
         return (self.bins[0], self.bins[-1], full_hist, full_hist_err2)
+
+    
+    def divide(self, denom):
+        size = len(self.hist)
+        
+        p_raw = np.divide(self.hist**2, self.histErr2, out=np.zeros(size),
+                          where=self.histErr2!=0)
+        t_raw = np.divide(denom.hist**2, denom.histErr2, out=np.zeros(size),
+                          where=denom.histErr2!=0)
+        ratio = np.divide(self.histErr2*denom.hist, self.hist*denom.histErr2,
+                         out=np.zeros(size), where=self.hist*denom.histErr2!=0)
+        alf = (1-0.682689492137)/2
+        lo = np.array([beta.ppf(alf, p, t+1) for p, t in zip(p_raw, t_raw)])
+        hi = np.array([beta.ppf(1 - alf, p+1, t) for p, t in zip(p_raw, t_raw)])
+        lo[np.isnan(lo)] = 0
+        hi[np.isnan(hi)] = 0
+        
+        self.hist = np.divide(p_raw, t_raw, out=np.zeros(size), where=t_raw!=0)
+        errLo = self.hist - lo*ratio/(1-lo)
+        errHi = hi/(1-hi)*ratio - self.hist
+        self.histErr2 = (errLo**2 + errHi**2)/2
+        return self

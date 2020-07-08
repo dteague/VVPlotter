@@ -5,7 +5,7 @@ import math
 from copy import deepcopy
 
 class pyHist:
-    def __init__(self, name, hist, color, isTH1=True, isMult=False):
+    def __init__(self, name, hist, color, isMult=False):
         self.name = name
         self.hist = deepcopy(hist)
         self.color = color
@@ -33,10 +33,7 @@ class pyHist:
         ])
         self.xerr = width / 2
         self.x = self.xbins[:-1] if isMult else self.xerr + self.xbins[:-1]
-
-    def getRHist(self):
-        return self.hist.getTH1()
-
+        
     def scaleHist(self, scale):
         self.y = np.multiply(self.y, scale)
         self.yerr = np.multiply(self.yerr, scale)

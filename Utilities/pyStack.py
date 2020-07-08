@@ -46,9 +46,6 @@ class pyStack():
         dark = 0.3
         return tuple([i - dark if i > dark else 0.0 for i in cvec])
 
-    def getRHist(self):
-        return self.histTotal.getTH1()
-
     def getHist(self):
         return self.histTotal
 

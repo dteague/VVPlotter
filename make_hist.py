@@ -26,6 +26,7 @@ import os
 import ROOT as r
 
 from Utilities.InfoGetter import InfoGetter
+from Utilities.pyUproot import GenericHist
 from Utilities.pyHist import pyHist
 from Utilities.pyStack import pyStack
 from Utilities.pyErrors import pyErrors
@@ -147,13 +148,11 @@ def makePlot(histName, info, basePath, infileName, channels):
             signal.scaleHist(scale)
         # ratio
         if signal:
-            divide = r.TGraphAsymmErrors(signal.getRHist(), stacker.getRHist(),
-                                         "pois")
-            stack_divide = r.TGraphAsymmErrors(stacker.getRHist(),
-                                               stacker.getRHist(), "pois")
-            ratio = pyHist("Ratio", divide, "black", isTH1=False, isMult=isDcrt)
-            band = pyErrors("Ratio", stack_divide, "plum", isTH1=False,
-                            isMult=isDcrt)
+            divide = signal.hist.copy().divide(stacker.getHist())
+            
+            stack_divide = stacker.getHist().copy().divide(stacker.getHist())
+            ratio = pyHist("Ratio", divide, "black", isMult=isDcrt)
+            band = pyErrors("Ratio", stack_divide, "plum", isMult=isDcrt)
 
         # Extra options
         stacker.setDrawType(args.drawStyle)
