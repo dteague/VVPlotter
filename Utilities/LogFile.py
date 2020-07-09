@@ -1,116 +1,166 @@
-from Utilities.prettytable import PrettyTable
-from Utilities.pyUproot import GenericHist
+from prettytable import PrettyTable
 import math
+import numpy as np
+
+from Utilities.pyUproot import GenericHist
 
 BKG = 0
 SIGNAL = 1
 DATA = 2
 TOTAL = 3
 
-
-def sl(listF):
-    newList = tuple()
-    for item in listF:
-        if isinstance(item, float):
-            if item < 1.0:
-                item = round(item, 3)
-            else:
-                item = round(item, 2)
-        newList += (item, )
-    return newList
-
-
 class LogFile:
+    """Wrapper for Logfile for a plot
+
+    Attributes
+    ----------
+    plotTable : PrettyTable
+        PrettyTable holding all the histogram information
+    output_name : string
+        Name/path of logfile to be created
+    analysis : string
+        Analysis running over
+    selection : string
+        Selection of analysis running over
+    lumi : float
+        Luminosity of this run (in ipb, but converted to ifb in class)
+    hists : list of GenericHists
+        List of GenericHists indexed by the constants BKG, SIGNAL, DATA, TOTAL
+    callTime : string
+        String of the time this script was called (any format)
+    command : string
+        Command used to start this script
+    name : string
+        Name of the histogram
+    
+    """
     def __init__(self, name, info, path='.'):
-        self.plotTable = PrettyTable(
-            ["Plot Group", "Weighted Events", "Error"])
-        self.output = open("%s/%s_info.log" % (path, name), "w")
-        self.info = info
+        self.plotTable = PrettyTable(["Plot Group", "Weighted Events", "Error"])
+        self.output_name = "{}/{}_info.log".format(path, name)
+        self.analysis = info.getAnalysis()
+        self.selection = info.getSelection()
+        self.lumi = info.getLumi() / 1000
         self.hists = [GenericHist()] * 4
         self.callTime = ""
         self.command = ""
         self.name = name
 
-    def getBackground(self):
-        return self.hists[BKG]
+    def add_mc(self, drawOrder):
+        """Add background data to this class
 
-    def getSignal(self):
-        return self.hists[SIGNAL]
-
-    def getTotalMC(self):
-        return self.hists[TOTAL]
-
-    def getData(self):
-        return self.hists[DATA]
-
-    def addMC(self, drawOrder):
+        Parameters
+        ----------
+        drawOrder : list of tuples (string, GenericHist)
+            List of all background hists with their names
+        """
         for name, hist in drawOrder:
-            wEvents, error = self.getIntErr(hist)
-            self.plotTable.add_row(sl((name, wEvents, error)))
+            self.plotTable.add_row([name, *self.get_int_err(hist)])
             self.hists[BKG] += hist
+        self.hists[TOTAL] += self.hists[BKG]
 
-        self.hists[TOTAL] += self.getBackground()
+    def add_signal(self, signal, groupName):
+        """Add signal data to this class
 
-    def addSignal(self, signal, groupName):
+        Parameters
+        ----------
+        signal : GenericHist
+            Histogram of signal information
+        groupName : string
+            Name used to label the singal
+        """
         self.hists[SIGNAL] += signal
-        wEvents, error = self.getIntErr(signal)
-        self.plotTable.add_row(sl((groupName, wEvents, error)))
+        self.plotTable.add_row([groupName, *self.get_int_err(signal)])
         self.hists[TOTAL] += signal
 
-    def addMetaInfo(self, callTime, command):
+    def add_metainfo(self, callTime, command):
+        """Set specific metadata for output file
+
+        Parameters
+        ----------
+        callTime : string
+            Time script was call (not formated, must be done before here)
+        command : string
+            Full commandline string use for this run
+
+        """
         self.callTime = callTime
         self.command = command
 
-    def getIntErr(self, hist):
-        wEvents = sum(hist.hist)
-        error = math.sqrt(sum(hist.histErr2))
-        return (wEvents, error)
+    def get_int_err(self, hist):
+        """Grab the Integral and error on that information
 
-    def writeOut(self, isLatex=False):
-        self.output.write('-' * 80 + '\n')
-        self.output.write("Script called at %s \n" % self.callTime)
-        self.output.write("The command was: %s \n" % self.command)
-        self.output.write("The name of this Histogram is: %s \n" % self.name)
-        self.output.write('-' * 80 + '\n')
-        self.output.write("Selection: %s/%s\n" %
-                          (self.info.getAnalysis(), self.info.getSelection()))
-        self.output.write("Luminosity: %0.2f fb^{-1}\n" %
-                          (self.info.getLumi() / 1000))
-        #output.write("\nPlotting branch: %s\n" % branch_name)
+        Parameters
+        ----------
+        hist : GenericHist or int
+            Histogram to get info from or int pointed to self.hists list
+        """
+        if isinstance(hist, int):
+            hist = self.hists[hist]
+        return hist.get_int_err()
 
-        if isLatex:
-            self.output.write('\n' + self.plotTable.get_latex_string() +
-                              '\n' * 2)
-        else:
-            self.output.write('\n' + self.plotTable.get_string() + '\n' * 2)
+    def write_out(self, isLatex=False):
+        """Write out all current information to the objects output file
 
-        if not self.getTotalMC().empty():
-            self.output.write("Total sum of Monte Carlo: %0.2f +/- %0.2f \n" %
-                              sl(self.getIntErr(self.getTotalMC())))
-        if not self.getSignal().empty():
-            self.output.write(
-                "Total sum of background Monte Carlo: %0.2f +/- %0.2f \n" %
-                sl(self.getIntErr(self.getBackground())))
-            self.output.write("Ratio S/(S+B): %0.2f +/- %0.2f \n" %
-                              sl(self.getSigBkgRatio()))
-            self.output.write("Ratio S/sqrt(S+B): %0.2f +/- %0.2f \n" %
-                              sl(self.getLikelihood()))
-        if not self.getData().empty():
-            self.output.write("Number of events in data %d \n" %
-                              self.getIntErr(self.getData())[0])
+        Parameters
+        ----------
+        isLatex : bool, optional
+            Whether table should be written out in latex or org style table
+        """
+        with open(self.output_name, 'w') as out:
+            out.write('-' * 80 + '\n')
+            out.write("Script called at {} \n".format(self.callTime))
+            out.write("The command was: {} \n".format{self.command})
+            out.write("The name of this Histogram is: {} \n"
+                         .format(self.name))
+            out.write('-' * 80 + '\n')
+            out.write("Selection: {}/{}\n".format(self.analysis,
+                                                     self.selection))
+            out.write("Luminosity: {:0.2f} fb^{{-1}}\n"
+                         .format(self.lumi))
+            if isLatex:
+                out.write('\n' + self.plotTable.get_latex_string() + '\n'*2)
+            else:
+                out.write('\n' + self.plotTable.get_string() + '\n'*2)
 
-        self.output.close()
+            if not self.hists[TOTAL].empty():
+                out.write("Total sum of Monte Carlo: {:0.2f} +/- {:0.2f} \n"
+                             .format(*self.get_int_err(TOTAL)))
+            if not self.hists[SIGNAL].empty():
+                out.write(
+                    "Total sum of background Monte Carlo: {:0.2f} +/- {:0.2f} \n"
+                    .format(*self.get_int_err(BKG)))
+                out.write("Ratio S/(S+B): {:0.2f} +/- {:0.2f} \n"
+                          .format(*self.get_sig_bkg_ratio()))
+                out.write("Ratio S/sqrt(S+B): {0.2f} +/- {:0.2f} \n"
+                          .format(*selfelf.get_likelihood()))
+            if not self.hists[DATA].empty():
+                out.write("Number of events in data {} \n"
+                          .format(*self.get_int_err(DATA)[0]))
 
-    def getSigBkgRatio(self):
-        sig, sigErr = self.getIntErr(self.getSignal())
-        tot, totErr = self.getIntErr(self.getTotalMC())
+    def get_sig_bkg_ratio(self):
+        """Get S/B
+
+        Returns
+        -------
+        tuple
+            tuple S/B and its error
+        """
+        sig, sigErr = self.get_int_err(SIGNAL)
+        tot, totErr = self.get_int_err(TOTAL)
         sigbkgd = sig / tot
         sigbkgdErr = sigbkgd * math.sqrt((sigErr / sig)**2 + (totErr / tot)**2)
         return (sigbkgd, sigbkgdErr)
 
-    def getLikelihood(self):
-        sig, sigErr = self.getIntErr(self.getSignal())
-        tot, totErr = self.getIntErr(self.getTotalMC())
+    def get_likelihood(self):
+        """Get Figure of merit
+
+        Returns
+        -------
+        tuple
+            tuple Figure of Merit (S/sqrt(S+B)) and its error
+        """
+        sig, sigErr = self.get_int_err(SIGNAL)
+        tot, totErr = self.get_int_err(TOTAL)
         likelihood = sig / math.sqrt(tot)
         likelihoodErr = likelihood * math.sqrt((sigErr / sig)**2 +
                                                (0.5 * totErr / tot)**2)

@@ -199,11 +199,11 @@ def makePlot(histName, info, basePath, infileName, channels):
 
         # setup log file
         logger = LogFile(histName, info, "{}/logs".format(baseChan))
-        logger.addMetaInfo(callTime, command)
-        logger.addMC(drawOrder)
+        logger.add_metainfo(callTime, command)
+        logger.add_mc(drawOrder)
         if signal:
-            logger.addSignal(groupHists[signalName], signalName)
-        logger.writeOut()
+            logger.add_signal(groupHists[signalName], signalName)
+        logger.write_out()
 
 
 def makePlotStar(args):
