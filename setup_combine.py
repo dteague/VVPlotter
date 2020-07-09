@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 import sys
 import os
 import numpy as np
@@ -12,9 +13,6 @@ plot_groups = ["ttt", "ttz", "ttw", "tth", "ttXY", "xg", "other", "rare"]
 fitvar = "HT"
 channels = ["SS"]
 
-out_folder = "relaxed_Cuts"
-
-
 systematics = [["lumi2016_13TeV", "lnN", [(1.025)]],
                ["CMS_norm_tttt", "lnN",  [("tttt", 1.5)]],
                ["CMS_norm_ttw", "lnN",   [("ttw", 1.4)]],
@@ -28,6 +26,9 @@ systematics = [["lumi2016_13TeV", "lnN", [(1.025)]],
 
 def get_com_args():
     parser = config.get_generic_args()
+    parser.add_argument("-o", "--outdir", type=str, required=True,
+                        help="output directory")
+
     return parser.parse_args()
     
 
@@ -88,8 +89,8 @@ def main(args):
         syst_list.append(Systematic(syst[0], syst[1]))
         syst_list[-1].add_syst_info(syst[2])
 
-    config.checkOrCreateDir(out_folder)
-    outname = "{}/{}_{}_card.txt".format(out_folder, anaSel[0], fitvar)
+    config.checkOrCreateDir(args.outdir)
+    outname = "{}/{}_{}_card.txt".format(args.outdir, anaSel[0], fitvar)
     
     inFile = uproot.open(args.infile)
     outFile = uproot.recreate(outname.replace("card.txt", "hists.root"))
@@ -107,5 +108,5 @@ def main(args):
     write_card(outname, fitvar, rates, syst_list)
 
 if __name__ == "__main__":
-    args = config.getComLineArgs()
+    args = get_com_args()
     main(args)

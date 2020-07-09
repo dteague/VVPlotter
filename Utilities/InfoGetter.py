@@ -60,7 +60,8 @@ class InfoGetter:
             try:
                 json_info = json.load(json_file)
             except ValueError as err:
-                print "Error reading JSON file %s. The error message was:" % json_file_name
+                print("Error reading JSON file {}. The error message was:"
+                      .format(json_file_name))
                 print(err)
         return json_info
 

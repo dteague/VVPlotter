@@ -108,7 +108,7 @@ class LogFile:
         with open(self.output_name, 'w') as out:
             out.write('-' * 80 + '\n')
             out.write("Script called at {} \n".format(self.callTime))
-            out.write("The command was: {} \n".format{self.command})
+            out.write("The command was: {} \n".format(self.command))
             out.write("The name of this Histogram is: {} \n"
                          .format(self.name))
             out.write('-' * 80 + '\n')
