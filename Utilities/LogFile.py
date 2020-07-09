@@ -2,8 +2,6 @@ from prettytable import PrettyTable
 import math
 import numpy as np
 
-from Utilities.pyUproot import GenericHist
-
 BKG = 0
 SIGNAL = 1
 DATA = 2
@@ -24,8 +22,9 @@ class LogFile:
         Selection of analysis running over
     lumi : float
         Luminosity of this run (in ipb, but converted to ifb in class)
-    hists : list of GenericHists
-        List of GenericHists indexed by the constants BKG, SIGNAL, DATA, TOTAL
+    hists : list of lists
+        List of lists with Integral and Error^2 indexed by the constants 
+        BKG, SIGNAL, DATA, TOTAL
     callTime : string
         String of the time this script was called (any format)
     command : string
@@ -40,7 +39,7 @@ class LogFile:
         self.analysis = info.getAnalysis()
         self.selection = info.getSelection()
         self.lumi = info.getLumi() / 1000
-        self.hists = [GenericHist()] * 4
+        self.hists = [np.array([0., 0.]) for i in range(4)] 
         self.callTime = ""
         self.command = ""
         self.name = name
@@ -54,8 +53,8 @@ class LogFile:
             List of all background hists with their names
         """
         for name, hist in drawOrder:
-            self.plotTable.add_row([name, *self.get_int_err(hist)])
-            self.hists[BKG] += hist
+            self.plotTable.add_row([name, *hist.get_int_err(True)])
+            self.hists[BKG] += hist.get_int_err()
         self.hists[TOTAL] += self.hists[BKG]
 
     def add_signal(self, signal, groupName):
@@ -68,8 +67,8 @@ class LogFile:
         groupName : string
             Name used to label the singal
         """
-        self.hists[SIGNAL] += signal
-        self.plotTable.add_row([groupName, *self.get_int_err(signal)])
+        self.hists[SIGNAL] += signal.get_int_err()
+        self.plotTable.add_row([groupName, *signal.get_int_err(False)])
         self.hists[TOTAL] += signal
 
     def add_metainfo(self, callTime, command):
@@ -86,17 +85,17 @@ class LogFile:
         self.callTime = callTime
         self.command = command
 
-    def get_int_err(self, hist):
+    def get_sqrt_err(self, idx):
         """Grab the Integral and error on that information
 
         Parameters
         ----------
-        hist : GenericHist or int
-            Histogram to get info from or int pointed to self.hists list
+        idx : int
+            int pointed to self.hists list
         """
-        if isinstance(hist, int):
-            hist = self.hists[hist]
-        return hist.get_int_err()
+        hist = self.hists[idx]
+        hist[1] = np.sqrt(hist[1])
+        return hist
 
     def write_out(self, isLatex=False):
         """Write out all current information to the objects output file
@@ -122,31 +121,31 @@ class LogFile:
             else:
                 out.write('\n' + self.plotTable.get_string() + '\n'*2)
 
-            if not self.hists[TOTAL].empty():
+            if self.hists[TOTAL].any():
                 out.write("Total sum of Monte Carlo: {:0.2f} +/- {:0.2f} \n"
-                             .format(*self.get_int_err(TOTAL)))
-            if not self.hists[SIGNAL].empty():
+                             .format(*self.get_sqrt_err(TOTAL)))
+            if self.hists[SIGNAL].any():
                 out.write(
                     "Total sum of background Monte Carlo: {:0.2f} +/- {:0.2f} \n"
-                    .format(*self.get_int_err(BKG)))
+                    .format(*self.get_sqrt_err(BKG)))
                 out.write("Ratio S/(S+B): {:0.2f} +/- {:0.2f} \n"
                           .format(*self.get_sig_bkg_ratio()))
                 out.write("Ratio S/sqrt(S+B): {0.2f} +/- {:0.2f} \n"
-                          .format(*selfelf.get_likelihood()))
-            if not self.hists[DATA].empty():
+                          .format(*self.get_likelihood()))
+            if self.hists[DATA].any():
                 out.write("Number of events in data {} \n"
-                          .format(*self.get_int_err(DATA)[0]))
+                          .format(self.hists[DATA][0]))
 
     def get_sig_bkg_ratio(self):
-        """Get S/B
+        """Get S/B with its error
 
         Returns
         -------
         tuple
             tuple S/B and its error
         """
-        sig, sigErr = self.get_int_err(SIGNAL)
-        tot, totErr = self.get_int_err(TOTAL)
+        sig, sigErr = self.hist[SIGNAL]
+        tot, totErr = self.hist[TOTAL]
         sigbkgd = sig / tot
         sigbkgdErr = sigbkgd * math.sqrt((sigErr / sig)**2 + (totErr / tot)**2)
         return (sigbkgd, sigbkgdErr)
@@ -159,8 +158,8 @@ class LogFile:
         tuple
             tuple Figure of Merit (S/sqrt(S+B)) and its error
         """
-        sig, sigErr = self.get_int_err(SIGNAL)
-        tot, totErr = self.get_int_err(TOTAL)
+        sig, sigErr = self.hist[SIGNAL]
+        tot, totErr = self.hist[TOTAL]
         likelihood = sig / math.sqrt(tot)
         likelihoodErr = likelihood * math.sqrt((sigErr / sig)**2 +
                                                (0.5 * totErr / tot)**2)

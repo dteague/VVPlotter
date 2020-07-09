@@ -119,9 +119,12 @@ class GenericHist:
     def integral(self):
         return np.sum(self.hist)
 
-    def get_int_err(self):
-        return np.array([np.sum(self.hist), np.sqrt(np.sum(self.histErr2))])
-    
+    def get_int_err(self, sqrt_err=False):
+        if sqrt_err:
+            return np.array([np.sum(self.hist), np.sqrt(np.sum(self.histErr2))])
+        else:
+            return np.array([np.sum(self.hist), np.sum(self.histErr2)])
+        
     def getMyTH1(self):
         full_hist = np.concatenate(([self.underflow[0]], self.hist, [self.overflow[0]]))
         full_hist_err2 = np.concatenate(([self.underflow[1]], self.histErr2, [self.overflow[1]]))
