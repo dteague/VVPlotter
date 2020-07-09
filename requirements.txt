@@ -1,2 +1,3 @@
 uproot==3.11.6
 uproot_methods
+sphinx==1.8.1
