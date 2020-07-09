@@ -1,0 +1,170 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Installation Guide &#8212; VVPlotter  documentation</title>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="_static/custom.css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Basics of Plotting" href="running_plotting.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="installation-guide">
+<h1>Installation Guide<a class="headerlink" href="#installation-guide" title="Permalink to this headline">¶</a></h1>
+<p>This package has removed ROOT dependencies so one can use python3 (suggested!). For ease, this guide with assume one is using a virtual environment. Below shows how to set that up</p>
+<div class="section" id="python3">
+<h2>Python3<a class="headerlink" href="#python3" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">python3</span> <span class="o">-</span><span class="n">m</span> <span class="n">venv</span> <span class="n">env</span>
+<span class="n">source</span> <span class="n">env</span><span class="o">/</span><span class="nb">bin</span><span class="o">/</span><span class="n">activate</span>
+<span class="n">pip</span> <span class="n">install</span> <span class="o">-</span><span class="n">r</span> <span class="n">requirements</span><span class="o">.</span><span class="n">txt</span>
+</pre></div>
+</div>
+<p><strong>Note:</strong> if you are new to virtual environments, to exit it, simply type <code class="docutils literal notranslate"><span class="pre">deactivate</span></code>. You will need to make sure virtual environment is activated every time you want to run the code</p>
+</div>
+</div>
+<div class="section" id="quick-start">
+<h1>Quick Start<a class="headerlink" href="#quick-start" title="Permalink to this headline">¶</a></h1>
+<p>The two main scripts in this repo are for making plots and for setting up combine. The structures for both are fairly similar, especially since they both take the same input (<code class="docutils literal notranslate"><span class="pre">VVAnalysis</span></code> output files)</p>
+<p>To run the plotting and combine code, simply type</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>./make_hist.py -i &lt;infile&gt; -a &lt;Analysis&gt;  <span class="c1"># Plotting code</span>
+./setup_combinepy -i &lt;infile&gt; -a &lt;Analysis&gt; -o &lt;outdir&gt;  <span class="c1"># Combine code</span>
+</pre></div>
+</div>
+<p>Or if you need more information, just run using the <code class="docutils literal notranslate"><span class="pre">--help</span></code> option</p>
+</div>
+<div class="section" id="mva-studies-documentation">
+<h1>MVA_studies’ documentation<a class="headerlink" href="#mva-studies-documentation" title="Permalink to this headline">¶</a></h1>
+<div class="toctree-wrapper compound">
+<p class="caption"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Installation Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="running_plotting.html">Basics of Plotting</a></li>
+<li class="toctree-l1"><a class="reference internal" href="running_combine.html">Basics of Combine</a></li>
+<li class="toctree-l1"><a class="reference internal" href="code_basics.html">Systematic Helper</a></li>
+<li class="toctree-l1"><a class="reference internal" href="code_basics.html#infogetter">InfoGetter</a></li>
+<li class="toctree-l1"><a class="reference internal" href="code_basics.html#log-file">Log File</a></li>
+<li class="toctree-l1"><a class="reference internal" href="code_basics.html#module-Utilities.configHelper">Helper Functions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="code_plothelps.html">Errors</a></li>
+<li class="toctree-l1"><a class="reference internal" href="code_plothelps.html#histograms">Histograms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="code_plothelps.html#generic-histograms">Generic Histograms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="code_plothelps.html#pad-holder">Pad Holder</a></li>
+<li class="toctree-l1"><a class="reference internal" href="code_plothelps.html#stacker">Stacker</a></li>
+</ul>
+</div>
+</div>
+<div class="section" id="indices-and-tables">
+<h1>Indices and tables<a class="headerlink" href="#indices-and-tables" title="Permalink to this headline">¶</a></h1>
+<ul class="simple">
+<li><a class="reference internal" href="genindex.html"><span class="std std-ref">Index</span></a></li>
+<li><a class="reference internal" href="py-modindex.html"><span class="std std-ref">Module Index</span></a></li>
+<li><a class="reference internal" href="search.html"><span class="std std-ref">Search Page</span></a></li>
+</ul>
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="#">VVPlotter</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Installation Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="running_plotting.html">Basics of Plotting</a></li>
+<li class="toctree-l1"><a class="reference internal" href="running_combine.html">Basics of Combine</a></li>
+<li class="toctree-l1"><a class="reference internal" href="code_basics.html">Systematic Helper</a></li>
+<li class="toctree-l1"><a class="reference internal" href="code_basics.html#infogetter">InfoGetter</a></li>
+<li class="toctree-l1"><a class="reference internal" href="code_basics.html#log-file">Log File</a></li>
+<li class="toctree-l1"><a class="reference internal" href="code_basics.html#module-Utilities.configHelper">Helper Functions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="code_plothelps.html">Errors</a></li>
+<li class="toctree-l1"><a class="reference internal" href="code_plothelps.html#histograms">Histograms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="code_plothelps.html#generic-histograms">Generic Histograms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="code_plothelps.html#pad-holder">Pad Holder</a></li>
+<li class="toctree-l1"><a class="reference internal" href="code_plothelps.html#stacker">Stacker</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="#">Documentation overview</a><ul>
+      <li>Next: <a href="running_plotting.html" title="next chapter">Basics of Plotting</a></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2020, Dylan Teague.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.8.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="_sources/index.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

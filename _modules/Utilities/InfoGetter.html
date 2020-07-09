@@ -1,0 +1,275 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Utilities.InfoGetter &#8212; VVPlotter  documentation</title>
+    <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/custom.css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for Utilities.InfoGetter</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">json</span>
+<span class="kn">import</span> <span class="nn">imp</span>
+<span class="kn">import</span> <span class="nn">glob</span>
+<span class="kn">import</span> <span class="nn">uproot</span>
+
+<div class="viewcode-block" id="InfoGetter"><a class="viewcode-back" href="../../code_basics.html#Utilities.InfoGetter.InfoGetter">[docs]</a><span class="k">class</span> <span class="nc">InfoGetter</span><span class="p">:</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">analysis</span><span class="p">,</span> <span class="n">selection</span><span class="p">,</span> <span class="n">infilename</span><span class="p">,</span> <span class="n">plotInfo</span><span class="o">=</span><span class="s2">&quot;plotInfo.py&quot;</span><span class="p">):</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">adm_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s1">&#39;ADM_PATH&#39;</span><span class="p">]</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;The Analysis Dataset Manager is found by the variable ADM_PATH&#39;</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Please set this path and consider setting it in your .bashrc&#39;</span><span class="p">)</span>
+            <span class="n">exit</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+        <span class="c1">#adm_path = &#39;</span>
+
+        <span class="n">inFile</span> <span class="o">=</span> <span class="n">uproot</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">infilename</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">analysis</span> <span class="o">=</span> <span class="n">analysis</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">selection</span> <span class="o">=</span> <span class="n">selection</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">groupInfo</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">readAllInfo</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">{}</span><span class="s2">/PlotGroups/</span><span class="si">{}</span><span class="s2">.py&quot;</span>
+                                          <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">adm_path</span><span class="p">,</span> <span class="n">analysis</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mcInfo</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">readAllInfo</span><span class="p">(</span>
+            <span class="s2">&quot;</span><span class="si">{}</span><span class="s2">/FileInfo/montecarlo/montecarlo_2016.py&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">adm_path</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">member2GroupMap</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">setupMember2GroupMap</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">listOfHists</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">setupListOfHists</span><span class="p">(</span><span class="n">inFile</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sumweights</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">setupSumWeight</span><span class="p">(</span><span class="n">inFile</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">plotSpecs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">readAllInfo</span><span class="p">(</span><span class="n">plotInfo</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">lumi</span> <span class="o">=</span> <span class="mi">35900</span>  <span class="c1">#default</span>
+        
+        <span class="c1"># if os.path.isfile(&quot;%s/PlotObjects/%s/%s.json&quot; % (adm_path, analysis, selection)):</span>
+        <span class="c1">#     self.objectInfo = self.readAllInfo(&quot;%s/PlotObjects/%s/%s.json&quot; % (adm_path, analysis, selection))</span>
+        <span class="c1"># else:</span>
+        <span class="c1">#     self.objectInfo = self.readAllInfo(&quot;%s/PlotObjects/%s.json&quot; % (adm_path, analysis))</span>
+<div class="viewcode-block" id="InfoGetter.readAllInfo"><a class="viewcode-back" href="../../code_basics.html#Utilities.InfoGetter.InfoGetter.readAllInfo">[docs]</a>    <span class="k">def</span> <span class="nf">readAllInfo</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">file_path</span><span class="p">):</span>
+        <span class="n">info</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">info_file</span> <span class="ow">in</span> <span class="n">glob</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="n">file_path</span><span class="p">):</span>
+            <span class="n">file_info</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">readInfo</span><span class="p">(</span><span class="n">info_file</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">file_info</span><span class="p">:</span>
+                <span class="n">info</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">file_info</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">info</span></div>
+
+<div class="viewcode-block" id="InfoGetter.readInfo"><a class="viewcode-back" href="../../code_basics.html#Utilities.InfoGetter.InfoGetter.readInfo">[docs]</a>    <span class="k">def</span> <span class="nf">readInfo</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">file_path</span><span class="p">):</span>
+        <span class="k">if</span> <span class="s2">&quot;.py&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">file_path</span><span class="p">[</span><span class="o">-</span><span class="mi">3</span><span class="p">:]</span> <span class="ow">and</span> <span class="s2">&quot;.json&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">file_path</span><span class="p">[</span><span class="o">-</span><span class="mi">5</span><span class="p">:]:</span>
+            <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">file_path</span> <span class="o">+</span> <span class="s2">&quot;.py&quot;</span><span class="p">):</span>
+                <span class="n">file_path</span> <span class="o">=</span> <span class="n">file_path</span> <span class="o">+</span> <span class="s2">&quot;.py&quot;</span>
+            <span class="k">elif</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">file_path</span> <span class="o">+</span> <span class="s2">&quot;.json&quot;</span><span class="p">):</span>
+                <span class="n">file_path</span> <span class="o">=</span> <span class="n">file_path</span> <span class="o">+</span> <span class="s2">&quot;.json&quot;</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">return</span>
+        <span class="k">if</span> <span class="s2">&quot;.py&quot;</span> <span class="ow">in</span> <span class="n">file_path</span><span class="p">[</span><span class="o">-</span><span class="mi">3</span><span class="p">:]:</span>
+            <span class="n">file_info</span> <span class="o">=</span> <span class="n">imp</span><span class="o">.</span><span class="n">load_source</span><span class="p">(</span><span class="s2">&quot;info_file&quot;</span><span class="p">,</span> <span class="n">file_path</span><span class="p">)</span>
+            <span class="n">info</span> <span class="o">=</span> <span class="n">file_info</span><span class="o">.</span><span class="n">info</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">info</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">readJson</span><span class="p">(</span><span class="n">file_path</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">info</span></div>
+
+<div class="viewcode-block" id="InfoGetter.readJson"><a class="viewcode-back" href="../../code_basics.html#Utilities.InfoGetter.InfoGetter.readJson">[docs]</a>    <span class="k">def</span> <span class="nf">readJson</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">json_file_name</span><span class="p">):</span>
+        <span class="n">json_info</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">json_file_name</span><span class="p">)</span> <span class="k">as</span> <span class="n">json_file</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">json_info</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">json_file</span><span class="p">)</span>
+            <span class="k">except</span> <span class="ne">ValueError</span> <span class="k">as</span> <span class="n">err</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Error reading JSON file </span><span class="si">{}</span><span class="s2">. The error message was:&quot;</span>
+                      <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">json_file_name</span><span class="p">))</span>
+                <span class="nb">print</span><span class="p">(</span><span class="n">err</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">json_info</span></div>
+
+<div class="viewcode-block" id="InfoGetter.setupMember2GroupMap"><a class="viewcode-back" href="../../code_basics.html#Utilities.InfoGetter.InfoGetter.setupMember2GroupMap">[docs]</a>    <span class="k">def</span> <span class="nf">setupMember2GroupMap</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">return_map</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">val</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">groupInfo</span><span class="o">.</span><span class="n">iteritems</span><span class="p">():</span>
+            <span class="k">for</span> <span class="n">bkg</span> <span class="ow">in</span> <span class="n">val</span><span class="p">[</span><span class="s1">&#39;Members&#39;</span><span class="p">]:</span>
+                <span class="k">if</span> <span class="n">bkg</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">return_map</span><span class="p">:</span>
+                    <span class="n">return_map</span><span class="p">[</span><span class="n">bkg</span><span class="p">]</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
+                <span class="n">return_map</span><span class="p">[</span><span class="n">bkg</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">return_map</span></div>
+
+<div class="viewcode-block" id="InfoGetter.setupGraphSpecs"><a class="viewcode-back" href="../../code_basics.html#Utilities.InfoGetter.InfoGetter.setupGraphSpecs">[docs]</a>    <span class="k">def</span> <span class="nf">setupGraphSpecs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">input</span><span class="p">):</span>
+        <span class="n">return_map</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">action</span><span class="p">,</span> <span class="n">dic</span> <span class="ow">in</span> <span class="nb">input</span><span class="o">.</span><span class="n">iteritems</span><span class="p">():</span>
+            <span class="k">for</span> <span class="n">hist</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">dic</span><span class="o">.</span><span class="n">iteritems</span><span class="p">():</span>
+                <span class="k">if</span> <span class="n">hist</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">return_map</span><span class="p">:</span>
+                    <span class="n">return_map</span><span class="p">[</span><span class="n">hist</span><span class="p">]</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+                <span class="n">return_map</span><span class="p">[</span><span class="n">hist</span><span class="p">][</span><span class="n">action</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
+        <span class="k">return</span> <span class="n">return_map</span></div>
+
+<div class="viewcode-block" id="InfoGetter.setupListOfHists"><a class="viewcode-back" href="../../code_basics.html#Utilities.InfoGetter.InfoGetter.setupListOfHists">[docs]</a>    <span class="k">def</span> <span class="nf">setupListOfHists</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">inFile</span><span class="p">):</span>
+        <span class="n">return_list</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">histName</span> <span class="ow">in</span> <span class="n">inFile</span><span class="p">[</span><span class="n">inFile</span><span class="o">.</span><span class="n">keys</span><span class="p">()[</span><span class="mi">0</span><span class="p">]]</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">histName</span> <span class="o">==</span> <span class="s1">&#39;sumweights&#39;</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="n">baseName</span> <span class="o">=</span> <span class="n">histName</span><span class="p">[:</span><span class="n">histName</span><span class="o">.</span><span class="n">rfind</span><span class="p">(</span><span class="s1">&#39;_&#39;</span><span class="p">)]</span>
+            <span class="k">if</span> <span class="n">baseName</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">return_list</span><span class="p">:</span>
+                <span class="n">return_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">baseName</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">return_list</span></div>
+
+<div class="viewcode-block" id="InfoGetter.setupSumWeight"><a class="viewcode-back" href="../../code_basics.html#Utilities.InfoGetter.InfoGetter.setupSumWeight">[docs]</a>    <span class="k">def</span> <span class="nf">setupSumWeight</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">inFile</span><span class="p">):</span>
+        <span class="n">return_dict</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">dirName</span><span class="p">,</span> <span class="nb">dir</span> <span class="ow">in</span> <span class="n">inFile</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="s2">&quot;sumweights&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="nb">dir</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;sumweight not in </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">dir</span><span class="p">))</span>
+            <span class="n">dirName</span> <span class="o">=</span> <span class="n">dirName</span><span class="p">[:</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span> <span class="k">if</span> <span class="n">dirName</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">:]</span> <span class="o">==</span> <span class="s2">&quot;;1&quot;</span> <span class="k">else</span> <span class="n">dirName</span>
+            <span class="n">return_dict</span><span class="p">[</span><span class="n">dirName</span><span class="p">]</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="nb">dir</span><span class="p">[</span><span class="s1">&#39;sumweights&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">return_dict</span></div>
+
+<div class="viewcode-block" id="InfoGetter.setDrawStyle"><a class="viewcode-back" href="../../code_basics.html#Utilities.InfoGetter.InfoGetter.setDrawStyle">[docs]</a>    <span class="k">def</span> <span class="nf">setDrawStyle</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">drawStyle</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">drawStyle</span> <span class="o">==</span> <span class="s2">&quot;compare&quot;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">lumi</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span></div>
+            
+<div class="viewcode-block" id="InfoGetter.getListOfHists"><a class="viewcode-back" href="../../code_basics.html#Utilities.InfoGetter.InfoGetter.getListOfHists">[docs]</a>    <span class="k">def</span> <span class="nf">getListOfHists</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">listOfHists</span></div>
+
+<div class="viewcode-block" id="InfoGetter.getGroupName"><a class="viewcode-back" href="../../code_basics.html#Utilities.InfoGetter.InfoGetter.getGroupName">[docs]</a>    <span class="k">def</span> <span class="nf">getGroupName</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">member</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">member2GroupMap</span><span class="p">[</span><span class="n">member</span><span class="p">]</span></div>
+
+<div class="viewcode-block" id="InfoGetter.getXSec"><a class="viewcode-back" href="../../code_basics.html#Utilities.InfoGetter.InfoGetter.getXSec">[docs]</a>    <span class="k">def</span> <span class="nf">getXSec</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">member</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">mcInfo</span><span class="p">[</span><span class="n">member</span><span class="p">][</span><span class="s1">&#39;cross_section&#39;</span><span class="p">]</span></div>
+
+<div class="viewcode-block" id="InfoGetter.getSumweight"><a class="viewcode-back" href="../../code_basics.html#Utilities.InfoGetter.InfoGetter.getSumweight">[docs]</a>    <span class="k">def</span> <span class="nf">getSumweight</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">member</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">sumweights</span><span class="p">[</span><span class="n">member</span><span class="p">]</span></div>
+
+<div class="viewcode-block" id="InfoGetter.getStyle"><a class="viewcode-back" href="../../code_basics.html#Utilities.InfoGetter.InfoGetter.getStyle">[docs]</a>    <span class="k">def</span> <span class="nf">getStyle</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">group</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">groupInfo</span><span class="p">[</span><span class="n">group</span><span class="p">][</span><span class="s1">&#39;Style&#39;</span><span class="p">]</span></div>
+
+<div class="viewcode-block" id="InfoGetter.getLumi"><a class="viewcode-back" href="../../code_basics.html#Utilities.InfoGetter.InfoGetter.getLumi">[docs]</a>    <span class="k">def</span> <span class="nf">getLumi</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">lumi</span></div>
+
+<div class="viewcode-block" id="InfoGetter.getLegendName"><a class="viewcode-back" href="../../code_basics.html#Utilities.InfoGetter.InfoGetter.getLegendName">[docs]</a>    <span class="k">def</span> <span class="nf">getLegendName</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">group</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">groupInfo</span><span class="p">[</span><span class="n">group</span><span class="p">][</span><span class="s1">&#39;Name&#39;</span><span class="p">]</span></div>
+
+<div class="viewcode-block" id="InfoGetter.getSelection"><a class="viewcode-back" href="../../code_basics.html#Utilities.InfoGetter.InfoGetter.getSelection">[docs]</a>    <span class="k">def</span> <span class="nf">getSelection</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">selection</span></div>
+
+<div class="viewcode-block" id="InfoGetter.getAnalysis"><a class="viewcode-back" href="../../code_basics.html#Utilities.InfoGetter.InfoGetter.getAnalysis">[docs]</a>    <span class="k">def</span> <span class="nf">getAnalysis</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">analysis</span></div>
+
+<div class="viewcode-block" id="InfoGetter.getGroups"><a class="viewcode-back" href="../../code_basics.html#Utilities.InfoGetter.InfoGetter.getGroups">[docs]</a>    <span class="k">def</span> <span class="nf">getGroups</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">groupInfo</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="InfoGetter.getPlotSpec"><a class="viewcode-back" href="../../code_basics.html#Utilities.InfoGetter.InfoGetter.getPlotSpec">[docs]</a>    <span class="k">def</span> <span class="nf">getPlotSpec</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">histName</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">plotSpecs</span><span class="p">[</span><span class="n">histName</span><span class="p">]</span></div>
+
+<div class="viewcode-block" id="InfoGetter.getUpBinUser"><a class="viewcode-back" href="../../code_basics.html#Utilities.InfoGetter.InfoGetter.getUpBinUser">[docs]</a>    <span class="k">def</span> <span class="nf">getUpBinUser</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">histName</span><span class="p">):</span>
+        <span class="k">if</span> <span class="s2">&quot;set_xlim&quot;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">plotSpecs</span><span class="p">[</span><span class="n">histName</span><span class="p">]:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">plotSpecs</span><span class="p">[</span><span class="n">histName</span><span class="p">][</span><span class="s2">&quot;set_xlim&quot;</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span></div>
+
+<div class="viewcode-block" id="InfoGetter.isInPlotSpec"><a class="viewcode-back" href="../../code_basics.html#Utilities.InfoGetter.InfoGetter.isInPlotSpec">[docs]</a>    <span class="k">def</span> <span class="nf">isInPlotSpec</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">histName</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">histName</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">plotSpecs</span></div>
+
+<div class="viewcode-block" id="InfoGetter.isDiscreteGraph"><a class="viewcode-back" href="../../code_basics.html#Utilities.InfoGetter.InfoGetter.isDiscreteGraph">[docs]</a>    <span class="k">def</span> <span class="nf">isDiscreteGraph</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">histName</span><span class="p">):</span>
+        <span class="k">if</span> <span class="s2">&quot;isMultiplicity&quot;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">plotSpecs</span><span class="p">[</span><span class="n">histName</span><span class="p">]:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">plotSpecs</span><span class="p">[</span><span class="n">histName</span><span class="p">][</span><span class="s2">&quot;isMultiplicity&quot;</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">False</span></div>
+        
+<div class="viewcode-block" id="InfoGetter.setLumi"><a class="viewcode-back" href="../../code_basics.html#Utilities.InfoGetter.InfoGetter.setLumi">[docs]</a>    <span class="k">def</span> <span class="nf">setLumi</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">lumi</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">lumi</span> <span class="o">=</span> <span class="n">lumi</span></div></div>
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../index.html">VVPlotter</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../index.html">Installation Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../running_plotting.html">Basics of Plotting</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../running_combine.html">Basics of Combine</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../code_basics.html">Systematic Helper</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../code_basics.html#infogetter">InfoGetter</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../code_basics.html#log-file">Log File</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../code_basics.html#module-Utilities.configHelper">Helper Functions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../code_plothelps.html">Errors</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../code_plothelps.html#histograms">Histograms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../code_plothelps.html#generic-histograms">Generic Histograms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../code_plothelps.html#pad-holder">Pad Holder</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../code_plothelps.html#stacker">Stacker</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2020, Dylan Teague.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.8.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>
