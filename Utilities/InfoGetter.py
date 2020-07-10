@@ -67,7 +67,7 @@ class InfoGetter:
 
     def setupMember2GroupMap(self):
         return_map = dict()
-        for key, val in self.groupInfo.iteritems():
+        for key, val in self.groupInfo.items():
             for bkg in val['Members']:
                 if bkg not in return_map:
                     return_map[bkg] = list()
@@ -76,8 +76,8 @@ class InfoGetter:
 
     def setupGraphSpecs(self, input):
         return_map = dict()
-        for action, dic in input.iteritems():
-            for hist, value in dic.iteritems():
+        for action, dic in input.items():
+            for hist, value in dict.items():
                 if hist not in return_map:
                     return_map[hist] = dict()
                 return_map[hist][action] = value
@@ -86,6 +86,7 @@ class InfoGetter:
     def setupListOfHists(self, inFile):
         return_list = []
         for histName in inFile[inFile.keys()[0]].keys():
+            histName = histName.decode()
             if histName == 'sumweights':
                 continue
             baseName = histName[:histName.rfind('_')]
@@ -98,7 +99,7 @@ class InfoGetter:
         for dirName, dir in inFile.items():
             if "sumweights" not in dir:
                 print("sumweight not in {}".format(dir))
-            dirName = dirName[:-2] if dirName[-2:] == ";1" else dirName
+            dirName = dirName.decode().strip(";1")
             return_dict[dirName] = sum(dir['sumweights'].values)
         return return_dict
 

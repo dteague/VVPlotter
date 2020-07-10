@@ -23,7 +23,6 @@ args = get_com_args()
 
 # need args before or root takes over "--help"
 import os
-import ROOT as r
 
 from Utilities.InfoGetter import InfoGetter
 from Utilities.pyUproot import GenericHist
@@ -46,7 +45,7 @@ import uproot
 # run time variables
 callTime = str(datetime.datetime.now())
 command = ' '.join(sys.argv)
-r.gErrorIgnoreLevel = r.kError
+
 
 font = {
     'family': 'sans',
@@ -117,7 +116,10 @@ def makePlot(histName, info, basePath, infileName, channels):
     isDcrt = info.isDiscreteGraph(histName)
     inFile = uproot.open(infileName)
     for chan in channels:
-        signal, data, ratio, band, error = None, None, None, None, None
+        signal = pyHist(info.getLegendName(signalName), drawObj[signalName],
+                        isDcrt)
+        ratio = pyHist("Ratio", "black", isDcrt)
+        data, band, error = None, None, None
 
         #### FIX
         groupHists = config.getNormedHistos(inFile, info, histName, chan)
@@ -125,11 +127,10 @@ def makePlot(histName, info, basePath, infileName, channels):
         #     return
 
         exclude = []
-        # signal
         
         if signalName in groupHists:
-            signal = pyHist(info.getLegendName(signalName), groupHists[signalName],
-                            drawObj[signalName], isMult=isDcrt)
+            signal.copy_into(groupHists[signalName])
+            print(groupHists[signalName], groupHists[signalName].integral())
             exclude.append(signalName)
         
         # data
@@ -143,15 +144,13 @@ def makePlot(histName, info, basePath, infileName, channels):
         stacker.setLegendNames(info)
         error = pyErrors("Stat Errors", stacker.getHist(), "plum", isMult=isDcrt)
         if signal:
-            scale = config.findScale(np.sum(stacker.stack) / sum(signal.y))
+            scale = config.findScale(np.sum(stacker.stack) / signal.integral())
             #scale = config.findScale(max(signal.y), stacker.getRHist().GetMaximum())
             signal.scaleHist(scale)
         # ratio
         if signal:
-            divide = signal.hist.copy().divide(stacker.getHist())
-            
             stack_divide = stacker.getHist().copy().divide(stacker.getHist())
-            ratio = pyHist("Ratio", divide, "black", isMult=isDcrt)
+            ratio.copy_into(signal.copy().divide(stacker.getHist()))
             band = pyErrors("Ratio", stack_divide, "plum", isMult=isDcrt)
 
         # Extra options

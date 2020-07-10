@@ -69,7 +69,7 @@ class LogFile:
         """
         self.hists[SIGNAL] += signal.get_int_err()
         self.plotTable.add_row([groupName, *signal.get_int_err(False)])
-        self.hists[TOTAL] += signal
+        self.hists[TOTAL] += self.hists[SIGNAL]
 
     def add_metainfo(self, callTime, command):
         """Set specific metadata for output file
@@ -130,7 +130,7 @@ class LogFile:
                     .format(*self.get_sqrt_err(BKG)))
                 out.write("Ratio S/(S+B): {:0.2f} +/- {:0.2f} \n"
                           .format(*self.get_sig_bkg_ratio()))
-                out.write("Ratio S/sqrt(S+B): {0.2f} +/- {:0.2f} \n"
+                out.write("Ratio S/sqrt(S+B): {:0.2f} +/- {:0.2f} \n"
                           .format(*self.get_likelihood()))
             if self.hists[DATA].any():
                 out.write("Number of events in data {} \n"
@@ -144,8 +144,8 @@ class LogFile:
         tuple
             tuple S/B and its error
         """
-        sig, sigErr = self.hist[SIGNAL]
-        tot, totErr = self.hist[TOTAL]
+        sig, sigErr = self.hists[SIGNAL]
+        tot, totErr = self.hists[TOTAL]
         sigbkgd = sig / tot
         sigbkgdErr = sigbkgd * math.sqrt((sigErr / sig)**2 + (totErr / tot)**2)
         return (sigbkgd, sigbkgdErr)
@@ -158,8 +158,8 @@ class LogFile:
         tuple
             tuple Figure of Merit (S/sqrt(S+B)) and its error
         """
-        sig, sigErr = self.hist[SIGNAL]
-        tot, totErr = self.hist[TOTAL]
+        sig, sigErr = self.hists[SIGNAL]
+        tot, totErr = self.hists[TOTAL]
         likelihood = sig / math.sqrt(tot)
         likelihoodErr = likelihood * math.sqrt((sigErr / sig)**2 +
                                                (0.5 * totErr / tot)**2)

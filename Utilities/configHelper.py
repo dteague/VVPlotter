@@ -30,16 +30,17 @@ def getNormedHistos(inFile, info, histName, chan):
     oldRebin = None
     fullHistName = "{}_{}".format(histName, chan)
     for sample in inFile.keys():
-        sample = sample[:-2] if sample[-2:] == ";1" else sample
-
         if fullHistName not in inFile[sample]: continue
         rootHist = inFile[sample][fullHistName]
+        sample = sample.decode()
+        sample = sample[:-2] if sample[-2:] == ";1" else sample
         scale = info.getXSec(sample) / info.getSumweight(sample)
 
-        hist = GenericHist(rootHist, scale)
+        hist = GenericHist.fromUproot(rootHist)
         if hist.empty():
             continue
-
+        hist.scale(scale)
+        
         if "setXaxis" in info.getPlotSpec(histName):
             hist.changeAxis(info.getPlotSpec(histName)["setXaxis"])
         if "Rebin" in info.getPlotSpec(histName):
@@ -56,7 +57,7 @@ def getNormedHistos(inFile, info, histName, chan):
     if oldRebin and oldRebin - newRebin > 5:
         print("Large change in rebin for {}: {} to {}".format(histName, oldRebin, newRebin))
             
-    for name, hist in groupHists.iteritems():
+    for name, hist in groupHists.items():
         if info.getLumi() < 0:
             scale = 1 / sum(hist.hist)
             hist.scale(scale)

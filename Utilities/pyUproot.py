@@ -3,24 +3,27 @@ from copy import deepcopy
 from scipy.stats import beta
 
 class GenericHist:
-    def __init__(self, *args):
-        self.bins = None
-        self.name = None
-        if len(args) == 0:
-            return
-        hist = args[0]
+    def __init__(self, hist=[None, None], err2=[0.], under=0, over=0):
+        self.hist = hist[0]
+        self.bins = hist[1]
+        self.histErr2 = np.array(err2[1:-1])
+        self.underflow = np.array([under, err2[0]])
+        self.overflow = np.array([over, err2[-1]])
         
+    @classmethod
+    def fromUproot(cls, hist):
         if np.array(hist._fSumw2).size == 0:
-            return
-        self.hist = np.array(hist.numpy()[0])
-        self.bins = np.array(hist.numpy()[1])
-        self.histErr2 = np.array(hist._fSumw2[1:-1])
-        self.underflow = np.array([hist.underflows, hist._fSumw2[0]])
-        self.overflow = np.array([hist.overflows, hist._fSumw2[-1]])
-        if len(args) == 2:
-            self.scale(args[1])
+            return cls()
+        return cls(hist=hist.numpy(), err2=hist._fSumw2, under=hist.underflows,
+                   over=hist.overflows)
 
-        
+    def copy_into(self, hist):
+        for var in vars(hist):
+            setattr(self, var, getattr(hist, var))
+
+    def copy(self):
+        return deepcopy(self)
+            
     def __add__(self, other):
         if self.empty():
             return deepcopy(other)
@@ -34,9 +37,6 @@ class GenericHist:
         returnHist.overflow = self.overflow + other.overflow
         returnHist.name = self.name
         return returnHist
-
-    def copy(self):
-        return deepcopy(self)
     
     def scale(self, scale):
         self.hist *= scale

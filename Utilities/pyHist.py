@@ -1,66 +1,40 @@
 import numpy as np
-from matplotlib import colors
-from Utilities.pyUproot import GenericHist
-import math
 from copy import deepcopy
 
-class pyHist:
-    def __init__(self, name, hist, color, isMult=False):
+from Utilities.pyUproot import GenericHist
+
+class pyHist(GenericHist):
+    def __init__(self, name, color, isMult):
+        super().__init__()
         self.name = name
-        self.hist = deepcopy(hist)
         self.color = color
-        #self.align = 'left' if isMult else "mid"
         self.align = 'mid'
-        
-        
         if '\\' in self.name:
-            self.name = r'$%s$' % self.name
-
-        if not isinstance(self.hist, GenericHist):
-            self.hist = GenericHist(hist)
-
-        self.setupTH1(self.hist, isMult)
-        if isMult:
-            self.xbins = self.xbins - 0.5
-        
-    def setupTH1(self, rootHist, isMult):
-        self.xbins = rootHist.bins
-        self.y = rootHist.hist
-        self.yerr = np.sqrt(rootHist.histErr2)
-        width = np.array([
-            self.xbins[i + 1] - self.xbins[i]
-            for i in xrange(len(self.xbins) - 1)
-        ])
-        self.xerr = width / 2
-        self.x = self.xbins[:-1] if isMult else self.xerr + self.xbins[:-1]
-        
+            self.name = r'${}$'.format(self.name)
+        self.isMult = isMult
+            
+    def copy_into(self, hist):
+        prev_bins = self.bins
+        super().copy_into(hist)
+        if prev_bins is None:
+            self.xerr = (self.bins[1:] - self.bins[:-1])/2
+            self.x = self.bins[:-1] if self.isMult else self.xerr + self.bins[:-1]
+            if self.isMult:
+                self.bins = self.bins - 0.5
+            
     def scaleHist(self, scale):
-        self.y = np.multiply(self.y, scale)
-        self.yerr = np.multiply(self.yerr, scale)
+        self.scale(scale)
         if scale != 1:
             self.name += " x " + str(scale)
-        self.hist.scale(scale)
+        
 
     def getInputs(self, **kwargs):
-        return dict(
-            {
-                "x": self.x,
-                "xerr": self.xerr,
-                "y": self.y,
-                "yerr": self.yerr,
-                "ecolor": self.color,
-                "color": self.color,
-                "barsabove": True,
-                "label": self.name,
-            }, **kwargs)
+        return dict({"x": self.x, "xerr": self.xerr, "y": self.hist,
+                     "yerr": np.sqrt(self.histErr2), "ecolor": self.color,
+                     "color": self.color, "barsabove": True, "label": self.name,},
+                    **kwargs)
 
     def getInputsHist(self, **kwargs):
-        return dict(
-            {
-                "weights": self.y,
-                "x": self.x,
-                "bins": self.xbins,
-                "color": self.color,
-                'align': self.align,
-                "histtype": "step"
-            }, **kwargs)
+        return dict({"weights": self.hist, "x": self.x, "bins": self.bins,
+                     "color": self.color, 'align': self.align, "histtype": "step"},
+                    **kwargs)

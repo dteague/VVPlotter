@@ -65,7 +65,7 @@ class pyPad:
             self.down.set_ylim(top=2.0, bottom=0)
 
         # user specified
-        for key, val in info.iteritems():
+        for key, val in info.items():
             try:
                 if "_y" in key:
                     getattr(self.up, key)(val)
