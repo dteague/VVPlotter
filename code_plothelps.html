@@ -52,8 +52,13 @@
 <h1>Histograms<a class="headerlink" href="#histograms" title="Permalink to this headline">¶</a></h1>
 <dl class="class">
 <dt id="Utilities.pyHist.pyHist">
-<em class="property">class </em><code class="descclassname">Utilities.pyHist.</code><code class="descname">pyHist</code><span class="sig-paren">(</span><em>name</em>, <em>hist</em>, <em>color</em>, <em>isMult=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/Utilities/pyHist.html#pyHist"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#Utilities.pyHist.pyHist" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.8)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<em class="property">class </em><code class="descclassname">Utilities.pyHist.</code><code class="descname">pyHist</code><span class="sig-paren">(</span><em>name</em>, <em>color</em>, <em>isMult</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/Utilities/pyHist.html#pyHist"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#Utilities.pyHist.pyHist" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#Utilities.pyUproot.GenericHist" title="Utilities.pyUproot.GenericHist"><code class="xref py py-class docutils literal notranslate"><span class="pre">Utilities.pyUproot.GenericHist</span></code></a></p>
+<dl class="method">
+<dt id="Utilities.pyHist.pyHist.copy_into">
+<code class="descname">copy_into</code><span class="sig-paren">(</span><em>hist</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/Utilities/pyHist.html#pyHist.copy_into"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#Utilities.pyHist.pyHist.copy_into" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
 <dl class="method">
 <dt id="Utilities.pyHist.pyHist.getInputs">
 <code class="descname">getInputs</code><span class="sig-paren">(</span><em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/Utilities/pyHist.html#pyHist.getInputs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#Utilities.pyHist.pyHist.getInputs" title="Permalink to this definition">¶</a></dt>
@@ -69,11 +74,6 @@
 <code class="descname">scaleHist</code><span class="sig-paren">(</span><em>scale</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/Utilities/pyHist.html#pyHist.scaleHist"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#Utilities.pyHist.pyHist.scaleHist" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
-<dl class="method">
-<dt id="Utilities.pyHist.pyHist.setupTH1">
-<code class="descname">setupTH1</code><span class="sig-paren">(</span><em>rootHist</em>, <em>isMult</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/Utilities/pyHist.html#pyHist.setupTH1"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#Utilities.pyHist.pyHist.setupTH1" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
 </dd></dl>
 
 </div>
@@ -81,7 +81,7 @@
 <h1>Generic Histograms<a class="headerlink" href="#generic-histograms" title="Permalink to this headline">¶</a></h1>
 <dl class="class">
 <dt id="Utilities.pyUproot.GenericHist">
-<em class="property">class </em><code class="descclassname">Utilities.pyUproot.</code><code class="descname">GenericHist</code><span class="sig-paren">(</span><em>*args</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/Utilities/pyUproot.html#GenericHist"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#Utilities.pyUproot.GenericHist" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="descclassname">Utilities.pyUproot.</code><code class="descname">GenericHist</code><span class="sig-paren">(</span><em>hist=[None, None], err2=[0.0], under=0, over=0</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/Utilities/pyUproot.html#GenericHist"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#Utilities.pyUproot.GenericHist" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.8)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
 <dl class="method">
 <dt id="Utilities.pyUproot.GenericHist.addOverflow">
@@ -109,6 +109,11 @@
 <dd></dd></dl>
 
 <dl class="method">
+<dt id="Utilities.pyUproot.GenericHist.copy_into">
+<code class="descname">copy_into</code><span class="sig-paren">(</span><em>hist</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/Utilities/pyUproot.html#GenericHist.copy_into"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#Utilities.pyUproot.GenericHist.copy_into" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
 <dt id="Utilities.pyUproot.GenericHist.divide">
 <code class="descname">divide</code><span class="sig-paren">(</span><em>denom</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/Utilities/pyUproot.html#GenericHist.divide"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#Utilities.pyUproot.GenericHist.divide" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
@@ -116,6 +121,11 @@
 <dl class="method">
 <dt id="Utilities.pyUproot.GenericHist.empty">
 <code class="descname">empty</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/Utilities/pyUproot.html#GenericHist.empty"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#Utilities.pyUproot.GenericHist.empty" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="classmethod">
+<dt id="Utilities.pyUproot.GenericHist.fromUproot">
+<em class="property">classmethod </em><code class="descname">fromUproot</code><span class="sig-paren">(</span><em>hist</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/Utilities/pyUproot.html#GenericHist.fromUproot"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#Utilities.pyUproot.GenericHist.fromUproot" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
