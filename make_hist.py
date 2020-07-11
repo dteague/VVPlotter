@@ -143,25 +143,26 @@ def makePlot(histName, info, basePath, infileName, channels):
         stacker.setColors(drawObj)
         stacker.setLegendNames(info)
         error = pyErrors("Stat Errors", stacker.getHist(), "plum", isMult=isDcrt)
-        if signal:
+        if not signal.empty():
             scale = config.findScale(np.sum(stacker.stack) / signal.integral())
-            #scale = config.findScale(max(signal.y), stacker.getRHist().GetMaximum())
             signal.scaleHist(scale)
+            
         # ratio
-        if signal:
+        if not signal.empty():
             stack_divide = stacker.getHist().copy().divide(stacker.getHist())
             ratio.copy_into(signal.copy().divide(stacker.getHist()))
+            ratio.scaleHist(signal.draw_sc)
             band = pyErrors("Ratio", stack_divide, "plum", isMult=isDcrt)
 
         # Extra options
         stacker.setDrawType(args.drawStyle)
 
-        pad = pyPad(plt, ratio != None)
+        pad = pyPad(plt, not ratio.empty())
 
         n, bins, patches = pad.getMainPad().hist(**stacker.getInputs())
         stacker.applyPatches(plt, patches)
 
-        if signal:
+        if not signal.empty():
             pad.getMainPad().hist(**signal.getInputsHist())
             pad.getMainPad().errorbar(
                 **signal.getInputs(fmt='o', markersize=4))
@@ -170,13 +171,10 @@ def makePlot(histName, info, basePath, infileName, channels):
         if error:
             pad.getMainPad().hist(
                 **error.getInputs(hatch='//', alpha=0.4, label="Stat Error"))
-        if ratio:
+        if not ratio.empty():
             pad.getSubMainPad().errorbar(
                 **ratio.getInputs(fmt='o', markersize=4))
-            pad.getSubMainPad().hist(**band.getInputs(
-                hatch='//',
-                alpha=0.4,
-            ))
+            pad.getSubMainPad().hist(**band.getInputs(hatch='//',alpha=0.4,))
 
         pad.setLegend(info.getPlotSpec(histName))
         pad.axisSetup(info.getPlotSpec(histName), stacker.getRange())
@@ -200,7 +198,7 @@ def makePlot(histName, info, basePath, infileName, channels):
         logger = LogFile(histName, info, "{}/logs".format(baseChan))
         logger.add_metainfo(callTime, command)
         logger.add_mc(drawOrder)
-        if signal:
+        if not signal.empty():
             logger.add_signal(groupHists[signalName], signalName)
         logger.write_out()
 

@@ -9,7 +9,7 @@ class GenericHist:
         self.histErr2 = np.array(err2[1:-1])
         self.underflow = np.array([under, err2[0]])
         self.overflow = np.array([over, err2[-1]])
-        
+
     @classmethod
     def fromUproot(cls, hist):
         if np.array(hist._fSumw2).size == 0:
@@ -18,12 +18,12 @@ class GenericHist:
                    over=hist.overflows)
 
     def copy_into(self, hist):
-        for var in vars(hist):
+        for var in ["hist", "bins", "histErr2", "underflow", "overflow"]:
             setattr(self, var, getattr(hist, var))
 
     def copy(self):
         return deepcopy(self)
-            
+
     def __add__(self, other):
         if self.empty():
             return deepcopy(other)
@@ -37,7 +37,7 @@ class GenericHist:
         returnHist.overflow = self.overflow + other.overflow
         returnHist.name = self.name
         return returnHist
-    
+
     def scale(self, scale):
         self.hist *= scale
         self.histErr2 *= scale**2
@@ -48,7 +48,7 @@ class GenericHist:
 
     def empty(self):
         return self.bins is None
-    
+
     def setupTGraph(self, graph):
         self.hist = np.array(graph.GetY())
         self.histErr2 = list()
@@ -92,8 +92,8 @@ class GenericHist:
         self.underflow[1] += sum(self.histErr2[:lowIdx])
         self.hist = self.hist[lowIdx:highIdx]
         self.histErr2 = self.histErr2[lowIdx:highIdx]
-        
-            
+
+
     def rebin(self, rebin):
         origRebin = rebin
         size = len(self.hist)
@@ -108,14 +108,14 @@ class GenericHist:
                 rebin -= 1
                 subSize = size//rebin
                 newSize = subSize * rebin
-            
+
         self.changeAxisIndex(0, newSize)
         self.hist = np.sum(self.hist.reshape(rebin, subSize), axis=1)
         self.histErr2 = np.sum(self.histErr2.reshape(rebin, subSize), axis=1)
         self.bins = self.bins[::subSize]
 
         return (origRebin, rebin)
-        
+
     def integral(self):
         return np.sum(self.hist)
 
@@ -124,30 +124,32 @@ class GenericHist:
             return np.array([np.sum(self.hist), np.sqrt(np.sum(self.histErr2))])
         else:
             return np.array([np.sum(self.hist), np.sum(self.histErr2)])
-        
+
     def getMyTH1(self):
         full_hist = np.concatenate(([self.underflow[0]], self.hist, [self.overflow[0]]))
         full_hist_err2 = np.concatenate(([self.underflow[1]], self.histErr2, [self.overflow[1]]))
         return (self.bins[0], self.bins[-1], full_hist, full_hist_err2)
 
-    
+
     def divide(self, denom):
         size = len(self.hist)
-        
+
         p_raw = np.divide(self.hist**2, self.histErr2, out=np.zeros(size),
                           where=self.histErr2!=0)
         t_raw = np.divide(denom.hist**2, denom.histErr2, out=np.zeros(size),
                           where=denom.histErr2!=0)
         ratio = np.divide(self.histErr2*denom.hist, self.hist*denom.histErr2,
                          out=np.zeros(size), where=self.hist*denom.histErr2!=0)
+
         alf = (1-0.682689492137)/2
         lo = np.array([beta.ppf(alf, p, t+1) for p, t in zip(p_raw, t_raw)])
         hi = np.array([beta.ppf(1 - alf, p+1, t) for p, t in zip(p_raw, t_raw)])
         lo[np.isnan(lo)] = 0
         hi[np.isnan(hi)] = 0
-        
-        self.hist = np.divide(p_raw, t_raw, out=np.zeros(size), where=t_raw!=0)
-        errLo = self.hist - lo*ratio/(1-lo)
-        errHi = hi/(1-hi)*ratio - self.hist
+        self.hist = np.divide(self.hist, denom.hist, out=np.zeros(size),
+                              where=denom.hist!=0)
+
+        errLo = self.hist - ratio*lo/(1-lo)
+        errHi = ratio*hi/(1-hi) - self.hist
         self.histErr2 = (errLo**2 + errHi**2)/2
         return self
