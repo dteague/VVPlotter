@@ -1,7 +1,7 @@
 import numpy as np
 from copy import deepcopy
 
-from Utilities.pyUproot import GenericHist
+from .pyUproot import GenericHist
 
 class pyHist(GenericHist):
     def __init__(self, name, color, isMult):

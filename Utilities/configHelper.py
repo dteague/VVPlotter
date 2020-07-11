@@ -1,7 +1,7 @@
 import argparse
 import os
 import time
-from Utilities.pyUproot import GenericHist
+from histograms.pyUproot import GenericHist
 
 
 def get_generic_args():

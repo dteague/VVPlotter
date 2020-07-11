@@ -1,6 +1,5 @@
 from matplotlib import gridspec
 
-
 class pyPad:
     """Documentation for pyPad
 

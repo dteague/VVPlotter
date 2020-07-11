@@ -25,11 +25,7 @@ args = get_com_args()
 import os
 
 from Utilities.InfoGetter import InfoGetter
-from Utilities.pyUproot import GenericHist
-from Utilities.pyHist import pyHist
-from Utilities.pyStack import pyStack
-from Utilities.pyErrors import pyErrors
-from Utilities.pyPad import pyPad
+from histograms import *
 from Utilities.LogFile import LogFile
 from Utilities.makeSimpleHtml import writeHTML
 

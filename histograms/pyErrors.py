@@ -1,5 +1,5 @@
 from matplotlib import colors as clr
-from Utilities.pyUproot import GenericHist
+from .pyUproot import GenericHist
 import numpy as np
 
 

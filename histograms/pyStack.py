@@ -1,4 +1,4 @@
-from Utilities.pyUproot import GenericHist
+from .pyUproot import GenericHist
 
 from matplotlib import colors as clr
 import numpy as np
