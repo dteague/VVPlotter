@@ -8,7 +8,6 @@ class pyHist(GenericHist):
         super().__init__()
         self.name = name
         self.color = color
-        self.align = 'mid'
         if '\\' in self.name:
             self.name = r'${}$'.format(self.name)
         self.isMult = isMult
@@ -28,10 +27,10 @@ class pyHist(GenericHist):
         return dict({"x": self.x, "xerr": self.xerr, "y": self.draw_sc*self.hist,
                      "yerr": self.draw_sc*np.sqrt(self.histErr2),
                      "ecolor": self.color, "color": self.color, "barsabove": True,
-                     "label": self.name,}, **kwargs)
+                     "label": self.name, 'fmt': 'o', 'markersize': 4}, **kwargs)
 
     def getInputsHist(self, **kwargs):
         bins = self.bins - 0.5 if self.isMult else self.bins
         return dict({"weights": self.draw_sc*self.hist, "x": self.x, "bins": bins,
-                     "color": self.color, 'align': self.align,"histtype": "step"},
+                     "color": self.color, 'align': "mid", "histtype": "step"},
                     **kwargs)

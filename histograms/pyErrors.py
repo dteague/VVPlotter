@@ -3,24 +3,21 @@ from .pyUproot import GenericHist
 import numpy as np
 
 
-class pyErrors:
-    def __init__(self, name, hist, color, isMult=False):
+class pyErrors(GenericHist):
+    def __init__(self, name, color, isMult):
+        super().__init__()
         self.name = name
-        self.hist = hist
         self.color = color
-        self.edgecolor = self._darkenColor(self.color)
-        self.align = 'left' if isMult else "mid"
-        # self.align = 'mid'
-        self.bottom = self.hist.hist - np.sqrt(self.hist.histErr2)
+        self.isMult = isMult
+    
+    def copy_into(self, hist):
+        super().copy_into(hist)
         
-    def _darkenColor(self, color):
-        cvec = clr.to_rgba(color)
-        dark = 0.3
-        return tuple([i - dark if i > dark else 0.0 for i in cvec])
-
     def getInputs(self, **kwargs):
-        return dict({"weights": 2*np.sqrt(self.hist.histErr2),
-                     "x": self.hist.bins[:-1], "bins": self.hist.bins,
-                     'bottom': self.bottom,"histtype": 'stepfilled',
-                     "color": self.color,'align': self.align, 'stacked': True},
+        bins = self.bins - 0.5 if self.isMult else self.bins
+        bottom = self.hist - np.sqrt(self.histErr2)
+        return dict({"weights": 2*np.sqrt(self.histErr2), "x": self.bins[:-1],
+                     "bins": bins, 'bottom': bottom, "histtype": 'stepfilled',
+                     "color": self.color,'align': 'mid', 'stacked': True,
+                     "hatch": '//', "alpha": 0.4, "label":self.name},
                     **kwargs)

@@ -69,7 +69,9 @@ def makePlot(histName, info, basePath, infileName, channels):
     for chan in channels:
         signal = pyHist(info.getLegendName(signalName), drawObj[signalName], isDcrt)
         ratio = pyHist("Ratio", "black", isDcrt)
-        data, band, error = None, None, None
+        error = pyErrors("Stat Errors", "plum", isDcrt)
+        band = pyErrors("Ratio", "plum", isDcrt)
+        data = pyHist("Data", 'black', isDcrt)
 
         #### FIX
         groupHists = config.getNormedHistos(inFile, info, histName, chan)
@@ -84,24 +86,23 @@ def makePlot(histName, info, basePath, infileName, channels):
 
         # data
         if False:
-            data = pyHist("Data", groupHists['data'], 'black', isMult=isDcrt)
+            data.copy_into(groupHists['data']) 
             exclude.append('data')
 
         drawOrder = config.getDrawOrder(groupHists, drawObj, info, ex=[signalName])
         stacker = pyStack(drawOrder, isMult=isDcrt)
         stacker.setColors(drawObj)
         stacker.setLegendNames(info)
-        error = pyErrors("Stat Errors", stacker.getHist(), "plum", isMult=isDcrt)
+        error.copy_into(stacker.getHist())
         if not signal.empty():
             scale = config.findScale(np.sum(stacker.stack) / signal.integral())
             signal.scaleHist(scale)
 
         # ratio
         if not signal.empty():
-            stack_divide = stacker.getHist().copy().divide(stacker.getHist())
             ratio.copy_into(signal.copy().divide(stacker.getHist()))
             ratio.scaleHist(signal.draw_sc)
-            band = pyErrors("Ratio", stack_divide, "plum", isMult=isDcrt)
+            band.copy_into(stacker.getHist().copy().divide(stacker.getHist()))
 
         # Extra options
         stacker.setDrawType(args.drawStyle)
@@ -113,17 +114,14 @@ def makePlot(histName, info, basePath, infileName, channels):
 
         if not signal.empty():
             pad.getMainPad().hist(**signal.getInputsHist())
-            pad.getMainPad().errorbar(
-                **signal.getInputs(fmt='o', markersize=4))
-        if data:
-            pad.getMainPad().errorbar(**data.getInputs(fmt='o', markersize=4))
-        if error:
-            pad.getMainPad().hist(
-                **error.getInputs(hatch='//', alpha=0.4, label="Stat Error"))
+            pad.getMainPad().errorbar(**signal.getInputs())
+        if not data.empty():
+            pad.getMainPad().errorbar(**data.getInputs())
+        if not error.empty():
+            pad.getMainPad().hist(**error.getInputs())
         if not ratio.empty():
-            pad.getSubMainPad().errorbar(
-                **ratio.getInputs(fmt='o', markersize=4))
-            pad.getSubMainPad().hist(**band.getInputs(hatch='//',alpha=0.4,))
+            pad.getSubMainPad().errorbar(**ratio.getInputs())
+            pad.getSubMainPad().hist(**band.getInputs())
 
         pad.setLegend(info.getPlotSpec(histName))
         pad.axisSetup(info.getPlotSpec(histName), stacker.getRange())
