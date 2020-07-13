@@ -31,7 +31,7 @@ plt.rc('ytick', labelsize=MEDIUM_SIZE)
 plt.rc('legend', fontsize=SMALL_SIZE)
 
 
-drawObj = {
+color_by_group = {
     #"tttt_"     : "mediumslateblue",
     "ttt": "crimson",
     "ttz": "mediumseagreen",
@@ -67,7 +67,7 @@ def makePlot(histName, info, basePath, infileName, channels):
     isDcrt = info.isDiscreteGraph(histName)
     inFile = uproot.open(infileName)
     for chan in channels:
-        signal = pyHist(info.getLegendName(signalName), drawObj[signalName], isDcrt)
+        signal = pyHist(info.getLegendName(signalName), color_by_group[signalName], isDcrt)
         ratio = pyHist("Ratio", "black", isDcrt)
         error = pyHist("Stat Errors", "plum", isDcrt)
         band = pyHist("Ratio", "plum", isDcrt)
@@ -75,23 +75,17 @@ def makePlot(histName, info, basePath, infileName, channels):
 
         #### FIX
         groupHists = config.getNormedHistos(inFile, info, histName, chan)
-        # if not groupHists or groupHists.values()[0].InheritsFrom("TH2"):
-        #     return
-
-        exclude = []
+        exclude = [signalName, 'data']
 
         if signalName in groupHists:
             signal.copy_into(groupHists[signalName])
-            exclude.append(signalName)
-
         # data
         if False:
             data.copy_into(groupHists['data']) 
-            exclude.append('data')
-
-        drawOrder = config.getDrawOrder(groupHists, drawObj, info, ex=[signalName])
+            
+        drawOrder = config.getDrawOrder(groupHists, color_by_group, info, ex=exclude)
         stacker = pyStack(drawOrder, isMult=isDcrt)
-        stacker.setColors(drawObj)
+        stacker.setColors(color_by_group)
         stacker.setLegendNames(info)
         error.copy_into(stacker.getHist())
         if not signal.empty():
@@ -109,19 +103,19 @@ def makePlot(histName, info, basePath, infileName, channels):
 
         pad = pyPad(plt, not ratio.empty())
 
-        n, bins, patches = pad.getMainPad().hist(**stacker.getInputs())
+        n, bins, patches = pad().hist(**stacker.getInputs())
         stacker.applyPatches(plt, patches)
 
         if not signal.empty():
-            pad.getMainPad().hist(**signal.getInputsHist())
-            pad.getMainPad().errorbar(**signal.getInputs())
+            pad().hist(**signal.getInputsHist())
+            pad().errorbar(**signal.getInputs())
         if not data.empty():
-            pad.getMainPad().errorbar(**data.getInputs())
+            pad().errorbar(**data.getInputs())
         if not error.empty():
-            pad.getMainPad().hist(**error.getInputsError())
+            pad().hist(**error.getInputsError())
         if not ratio.empty():
-            pad.getSubMainPad().errorbar(**ratio.getInputs())
-            pad.getSubMainPad().hist(**band.getInputsError())
+            pad(sub_pad=True).errorbar(**ratio.getInputs())
+            pad(sub_pad=True).hist(**band.getInputsError())
 
         pad.setLegend(info.getPlotSpec(histName))
         pad.axisSetup(info.getPlotSpec(histName), stacker.getRange())
@@ -133,12 +127,8 @@ def makePlot(histName, info, basePath, infileName, channels):
             chan = ""
         baseChan = "{}/{}".format(basePath, chan)
         plotBase = "{}/plots/{}".format(baseChan, histName)
-        plt.savefig("{}.png".format(plotBase),
-                    format="png",
-                    bbox_inches='tight')
-        plt.savefig("{}.pdf".format(plotBase),
-                    format="pdf",
-                    bbox_inches='tight')
+        plt.savefig("{}.png".format(plotBase), format="png", bbox_inches='tight')
+        plt.savefig("{}.pdf".format(plotBase), format="pdf", bbox_inches='tight')
         plt.close()
 
         # setup log file
@@ -170,12 +160,12 @@ if __name__ == "__main__":
         info.setLumi(args.lumi * 1000)
 
     info.setDrawStyle(args.drawStyle)
-    if not drawObj:
+    if not color_by_group:
         config.printDrawObjAndExit(info)
 
-    if args.signal and args.signal not in drawObj:
+    if args.signal and args.signal not in color_by_group:
         print("signal not in list of groups!")
-        print(drawObj.keys())
+        print(color_by_group.keys())
         exit(1)
     signalName = args.signal
     channels = args.channels.split(',')
