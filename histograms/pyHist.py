@@ -34,3 +34,12 @@ class pyHist(GenericHist):
         return dict({"weights": self.draw_sc*self.hist, "x": self.x, "bins": bins,
                      "color": self.color, 'align': "mid", "histtype": "step"},
                     **kwargs)
+
+    def getInputsError(self, **kwargs):
+        bins = self.bins - 0.5 if self.isMult else self.bins
+        bottom = self.hist - np.sqrt(self.histErr2)
+        return dict({"weights": 2*np.sqrt(self.histErr2), "x": self.x,
+                     "bins": bins, 'bottom': bottom, "histtype": 'stepfilled',
+                     "color": self.color,'align': 'mid', 'stacked': True,
+                     "hatch": '//', "alpha": 0.4, "label":self.name},
+                    **kwargs)

@@ -69,8 +69,8 @@ def makePlot(histName, info, basePath, infileName, channels):
     for chan in channels:
         signal = pyHist(info.getLegendName(signalName), drawObj[signalName], isDcrt)
         ratio = pyHist("Ratio", "black", isDcrt)
-        error = pyErrors("Stat Errors", "plum", isDcrt)
-        band = pyErrors("Ratio", "plum", isDcrt)
+        error = pyHist("Stat Errors", "plum", isDcrt)
+        band = pyHist("Ratio", "plum", isDcrt)
         data = pyHist("Data", 'black', isDcrt)
 
         #### FIX
@@ -118,10 +118,10 @@ def makePlot(histName, info, basePath, infileName, channels):
         if not data.empty():
             pad.getMainPad().errorbar(**data.getInputs())
         if not error.empty():
-            pad.getMainPad().hist(**error.getInputs())
+            pad.getMainPad().hist(**error.getInputsError())
         if not ratio.empty():
             pad.getSubMainPad().errorbar(**ratio.getInputs())
-            pad.getSubMainPad().hist(**band.getInputs())
+            pad.getSubMainPad().hist(**band.getInputsError())
 
         pad.setLegend(info.getPlotSpec(histName))
         pad.axisSetup(info.getPlotSpec(histName), stacker.getRange())
