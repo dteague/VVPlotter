@@ -1,6 +1,49 @@
 #!/usr/bin/env python
+import os
+import numpy as np
+import matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
+import datetime
+import sys
+import time
+import uproot
+import multiprocessing as mp
+
+from Utilities.InfoGetter import InfoGetter
+from histograms import *
+from Utilities.LogFile import LogFile
+from Utilities.makeSimpleHtml import writeHTML
 import Utilities.configHelper as config
 
+font = {
+    'family': 'sans',
+    'weight': 'normal',
+}
+plt.rc('font', **font)
+SMALL_SIZE = 12
+MEDIUM_SIZE = 16
+plt.rc('font', size=SMALL_SIZE)
+plt.rc('axes', titlesize=SMALL_SIZE)
+plt.rc('axes', labelsize=MEDIUM_SIZE)
+plt.rc('xtick', labelsize=MEDIUM_SIZE)
+plt.rc('ytick', labelsize=MEDIUM_SIZE)
+plt.rc('legend', fontsize=SMALL_SIZE)
+
+
+drawObj = {
+    #"tttt_"     : "mediumslateblue",
+    "ttt": "crimson",
+    "ttz": "mediumseagreen",
+    "rare_no3top": "darkorange",
+    "ttXY": "cornflowerblue",
+    "ttw": "darkgreen",
+    "xg": "indigo",
+    "tth": "slategray",
+    "other": "blue",
+    "tttt_201X": "darkmagenta",
+    # "ttt_201X"      : "cornflowerblue",
+}
 
 def get_com_args():
     parser = config.get_generic_args()
@@ -19,101 +62,12 @@ def get_com_args():
                         help="Do not add ratio comparison")
     return parser.parse_args()
 
-args = get_com_args()
-
-# need args before or root takes over "--help"
-import os
-
-from Utilities.InfoGetter import InfoGetter
-from histograms import *
-from Utilities.LogFile import LogFile
-from Utilities.makeSimpleHtml import writeHTML
-
-import numpy as np
-import matplotlib
-matplotlib.use('Agg')
-import matplotlib.pyplot as plt
-import datetime
-import sys
-import time
-import uproot
-
-# run time variables
-callTime = str(datetime.datetime.now())
-command = ' '.join(sys.argv)
-
-
-font = {
-    'family': 'sans',
-    'weight': 'normal',
-}
-
-plt.rc('font', **font)
-
-SMALL_SIZE = 12
-MEDIUM_SIZE = 16
-plt.rc('font', size=SMALL_SIZE)
-plt.rc('axes', titlesize=SMALL_SIZE)
-plt.rc('axes', labelsize=MEDIUM_SIZE)
-plt.rc('xtick', labelsize=MEDIUM_SIZE)
-plt.rc('ytick', labelsize=MEDIUM_SIZE)
-plt.rc('legend', fontsize=SMALL_SIZE)
-
-# Setup
-
-drawObj = {
-    #"tttt_"     : "mediumslateblue",
-    "ttt": "crimson",
-    "ttz": "mediumseagreen",
-    "rare_no3top": "darkorange",
-    "ttXY": "cornflowerblue",
-    "ttw": "darkgreen",
-    "xg": "indigo",
-    "tth": "slategray",
-    "other": "blue",
-    "tttt_201X": "darkmagenta",
-    # "ttt_201X"      : "cornflowerblue",
-}
-
-anaSel = args.analysis.split('/')
-if len(anaSel) == 1:
-    anaSel.append('')
-
-info = InfoGetter(anaSel[0], anaSel[1], args.infile, args.info)
-if args.drawStyle == "compare":
-    info.setLumi(-1)
-else:
-    info.setLumi(args.lumi * 1000)
-
-info.setDrawStyle(args.drawStyle)
-if not drawObj:
-    config.printDrawObjAndExit(info)
-
-if args.signal and args.signal not in drawObj:
-    print("signal not in list of groups!")
-    print(drawObj.keys())
-    exit(1)
-signalName = args.signal
-channels = args.channels.split(',')
-
-channels = ['SS']  #["all", "OS", "SS"]# , "mult", "one"]
-
-basePath = config.setupPathAndDir(args.analysis, args.drawStyle, args.path,
-                                  channels)
-
-argList = list()
-for histName in info.getListOfHists():
-    if not info.isInPlotSpec(histName):
-        continue
-    argList.append((histName, info, basePath, args.infile, channels))
-
 def makePlot(histName, info, basePath, infileName, channels):
     print("Processing {}".format(histName))
     isDcrt = info.isDiscreteGraph(histName)
     inFile = uproot.open(infileName)
     for chan in channels:
-        signal = pyHist(info.getLegendName(signalName), drawObj[signalName],
-                        isDcrt)
+        signal = pyHist(info.getLegendName(signalName), drawObj[signalName], isDcrt)
         ratio = pyHist("Ratio", "black", isDcrt)
         data, band, error = None, None, None
 
@@ -123,12 +77,11 @@ def makePlot(histName, info, basePath, infileName, channels):
         #     return
 
         exclude = []
-        
+
         if signalName in groupHists:
             signal.copy_into(groupHists[signalName])
-            print(groupHists[signalName], groupHists[signalName].integral())
             exclude.append(signalName)
-        
+
         # data
         if False:
             data = pyHist("Data", groupHists['data'], 'black', isMult=isDcrt)
@@ -142,7 +95,7 @@ def makePlot(histName, info, basePath, infileName, channels):
         if not signal.empty():
             scale = config.findScale(np.sum(stacker.stack) / signal.integral())
             signal.scaleHist(scale)
-            
+
         # ratio
         if not signal.empty():
             stack_divide = stacker.getHist().copy().divide(stacker.getHist())
@@ -202,35 +155,66 @@ def makePlot(histName, info, basePath, infileName, channels):
 def makePlotStar(args):
     makePlot(*args)
 
-import multiprocessing as mp
-if args.j > 1:
-    pool = mp.Pool(args.j)
-    results = pool.map(makePlotStar, argList)
-    pool.close()
-    pool.join()
-else:
-    for plot in argList:
-        makePlotStar(plot)
 
-try:
-    channels.remove("all")
-except ValueError:
-    if len(channels) == 1:
-        channels = []
+
+if __name__ == "__main__":
+    args = get_com_args()
+    callTime = str(datetime.datetime.now())
+    command = ' '.join(sys.argv)
+    anaSel = args.analysis.split('/')
+    if len(anaSel) == 1:
+        anaSel.append('')
+
+    info = InfoGetter(anaSel[0], anaSel[1], args.infile, args.info)
+    if args.drawStyle == "compare":
+        info.setLumi(-1)
     else:
-        print("No all channel")
+        info.setLumi(args.lumi * 1000)
 
-writeHTML(basePath, args.analysis, channels)
-for chan in channels:
-    writeHTML("{}/{}".format(basePath, chan),
-              "{}/{}".format(args.analysis, chan))
-userName = os.environ['USER']
-htmlPath = basePath[basePath.index(userName) + len(userName) + 1:]
-if 'hep.wisc.edu' in os.environ['HOSTNAME']:
-    print("https://www.hep.wisc.edu/~{0}/{1}".format(os.environ['USER'],
-                                                         htmlPath[4:]))
-else:
-    print("https://{0}.web.cern.ch/{0}/{1}".format(os.environ['USER'],
-                                                   htmlPath[4:]))
+    info.setDrawStyle(args.drawStyle)
+    if not drawObj:
+        config.printDrawObjAndExit(info)
+
+    if args.signal and args.signal not in drawObj:
+        print("signal not in list of groups!")
+        print(drawObj.keys())
+        exit(1)
+    signalName = args.signal
+    channels = args.channels.split(',')
+
+    basePath = config.setupPathAndDir(args.analysis, args.drawStyle, args.path,
+                                      channels)
+
+    argList = list()
+    for histName in info.getListOfHists():
+        if not info.isInPlotSpec(histName):
+            continue
+        argList.append((histName, info, basePath, args.infile, channels))
 
 
+    if args.j > 1:
+        pool = mp.Pool(args.j)
+        results = pool.map(makePlotStar, argList)
+        pool.close()
+        pool.join()
+    else:
+        for plot in argList:
+            makePlotStar(plot)
+
+    try:
+        channels.remove("all")
+    except ValueError:
+        if len(channels) == 1:
+            channels = []
+        else:
+            print("No all channel")
+
+    writeHTML(basePath, args.analysis, channels)
+    for chan in channels:
+        writeHTML("{}/{}".format(basePath, chan), "{}/{}".format(args.analysis, chan))
+    userName = os.environ['USER']
+    htmlPath = basePath[basePath.index(userName) + len(userName) + 1:][4:]
+    if 'hep.wisc.edu' in os.environ['HOSTNAME']:
+        print("https://www.hep.wisc.edu/~{0}/{1}".format(userName, htmlPath))
+    else:
+        print("https://{0}.web.cern.ch/{0}/{1}".format(userName, htmlPath))
