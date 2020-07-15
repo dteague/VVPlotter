@@ -15,7 +15,7 @@ def get_generic_args():
     parser.add_argument("-c", "--channels", type=str, default="all",
                         help="List (separate by commas) of channels to plot")
     parser.add_argument("-j", type=int, default=1, help="Number of cores")
-    parser.add_argument("-l", "--lumi", type=float, default=35.9,
+    parser.add_argument("-l", "--lumi", type=float, default=140,
                         help="Luminsoity in fb-1. Default 35.9 fb-1. "
                         "Set to -1 for unit normalization")
     # parser.add_argument("--autoScale", type=float, default=-1.,

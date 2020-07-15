@@ -13,7 +13,7 @@ class SimpleNamespace (object):
 class MyTH1(uproot_methods.classes.TH1.Methods, list):
     def __init__(self, low, high, values, err2, title=""):
         self._fXaxis = SimpleNamespace()
-        self._fXaxis._fNbins = len(values)
+        self._fXaxis._fNbins = len(values) - 2 
         self._fXaxis._fXmin = low
         self._fXaxis._fXmax = high
         self._fSumw2 = err2
