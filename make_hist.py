@@ -4,6 +4,7 @@ import numpy as np
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
+import mplhep as hep
 import datetime
 import sys
 import time
@@ -29,7 +30,7 @@ plt.rc('axes', labelsize=MEDIUM_SIZE)
 plt.rc('xtick', labelsize=MEDIUM_SIZE)
 plt.rc('ytick', labelsize=MEDIUM_SIZE)
 plt.rc('legend', fontsize=SMALL_SIZE)
-
+plt.style.use(hep.style.CMS)
 
 color_by_group = {
     #"tttt_"     : "mediumslateblue",
@@ -119,9 +120,9 @@ def makePlot(histName, info, basePath, infileName, channels):
 
         pad.setLegend(info.getPlotSpec(histName))
         pad.axisSetup(info.getPlotSpec(histName), stacker.getRange())
-
+        hep.cms.label(ax=pad(), year="")
+        
         fig = plt.gcf()
-        fig.set_size_inches(8, 8)
 
         if chan == "all" or len(channels) == 1:
             chan = ""
