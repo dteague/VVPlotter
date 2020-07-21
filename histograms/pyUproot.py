@@ -6,6 +6,8 @@ class GenericHist:
     def __init__(self, hist=[None, None], err2=[0.], under=0, over=0):
         self.hist = hist[0]
         self.bins = hist[1]
+        if self.bins is not None and err2 == [0.]:
+            err2 = np.zeros(len(self.bins) + 1)
         self.histErr2 = np.array(err2[1:-1])
         self.underflow = np.array([under, err2[0]])
         self.overflow = np.array([over, err2[-1]])
@@ -95,6 +97,9 @@ class GenericHist:
 
 
     def rebin(self, rebin):
+        if not isinstance(rebin, int):
+            self.special_rebin(rebin)
+            return (-1, -1)
         origRebin = rebin
         size = len(self.hist)
         subSize = size//rebin
@@ -116,6 +121,30 @@ class GenericHist:
 
         return (origRebin, rebin)
 
+    def special_rebin(self, rebin):
+        old_width = self.bins[1] - self.bins[0]
+        i = 0
+        new_bins = [self.bins[0]]
+        new_hist = list()
+        new_histErr2 = list()
+        for num, width in rebin:
+            if width > 0:
+                bin_width = int(width/old_width+0.5)
+            else:
+                bin_width = int((len(self.bins)-i-1)/num) + 1
+            while i + bin_width < len(self.bins) and num > 0:
+                num -= 1
+                new_bins.append(self.bins[i+bin_width])
+                new_hist.append(sum(self.hist[i:i+bin_width]))
+                new_histErr2.append(sum(self.histErr2[i:i+bin_width]))
+                i += bin_width
+        new_bins.append(self.bins[-1])
+        new_hist.append(sum(self.hist[i:]))
+        new_histErr2.append(sum(self.histErr2[i:]))
+        self.bins = np.array(new_bins)
+        self.hist = np.array(new_hist)
+        self.histErr2 = np.array(new_histErr2)
+        
     def integral(self):
         return np.sum(self.hist)
 
@@ -128,7 +157,7 @@ class GenericHist:
     def getMyTH1(self):
         full_hist = np.concatenate(([self.underflow[0]], self.hist, [self.overflow[0]]))
         full_hist_err2 = np.concatenate(([self.underflow[1]], self.histErr2, [self.overflow[1]]))
-        return (self.bins[0], self.bins[-1], full_hist, full_hist_err2)
+        return (self.bins, full_hist, full_hist_err2)
 
 
     def divide(self, denom):

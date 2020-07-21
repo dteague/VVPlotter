@@ -15,7 +15,7 @@ fitvar = "BDT.Background"
 channels = ["SS"]
 
 systematics = [
-    #["lumi2016_13TeV", "lnN", [(1.025)]],
+    ["lumi2016_13TeV", "lnN", [(1.025)]],
         #        ["CMS_norm_tttt", "lnN",  [("tttt", 1.5)]],
 #                ["CMS_norm_ttw", "lnN",   [("ttw", 1.4)]],
 #                ["CMS_norm_ttz", "lnN",   [("ttz", 1.4)]],

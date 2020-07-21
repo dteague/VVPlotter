@@ -11,11 +11,12 @@ class SimpleNamespace (object):
         return self.__dict__ == other.__dict__
 
 class MyTH1(uproot_methods.classes.TH1.Methods, list):
-    def __init__(self, low, high, values, err2, title=""):
+    def __init__(self, bins, values, err2, title=""):
         self._fXaxis = SimpleNamespace()
         self._fXaxis._fNbins = len(values) - 2 
-        self._fXaxis._fXmin = low
-        self._fXaxis._fXmax = high
+        self._fXaxis._fXmin = bins[0]
+        self._fXaxis._fXmax = bins[-1]
+        self._fXaxis._fXbins = bins
         self._fSumw2 = err2
         for x in values:
             self.append(float(x))
