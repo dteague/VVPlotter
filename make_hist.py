@@ -3,13 +3,13 @@ import os
 import numpy as np
 import matplotlib
 matplotlib.use('Agg')
+import subprocess
 import matplotlib.pyplot as plt
 import mplhep as hep
 import datetime
 import sys
-import time
-import uproot
 import multiprocessing as mp
+import logging
 
 from Utilities.InfoGetter import InfoGetter
 from histograms import *
@@ -17,23 +17,10 @@ from Utilities.LogFile import LogFile
 from Utilities.makeSimpleHtml import writeHTML
 import Utilities.configHelper as config
 
-font = {
-    'family': 'sans',
-    'weight': 'normal',
-}
-plt.rc('font', **font)
-SMALL_SIZE = 12
-MEDIUM_SIZE = 16
-plt.rc('font', size=SMALL_SIZE)
-plt.rc('axes', titlesize=SMALL_SIZE)
-plt.rc('axes', labelsize=MEDIUM_SIZE)
-plt.rc('xtick', labelsize=MEDIUM_SIZE)
-plt.rc('ytick', labelsize=MEDIUM_SIZE)
-plt.rc('legend', fontsize=SMALL_SIZE)
-plt.style.use(hep.style.CMS)
+plt.style.use([hep.style.CMS, hep.style.firamath])
+logging.getLogger('matplotlib.font_manager').disabled = True
 
 color_by_group = {
-    #"tttt_"     : "mediumslateblue",
     "ttt": "crimson",
     "ttz": "mediumseagreen",
     "ttw": "darkgreen",
@@ -43,7 +30,6 @@ color_by_group = {
     "tth": "slategray",
     "other": "blue",
     "tttt_201X": "darkmagenta",
-    # "ttt_201X"      : "cornflowerblue",
 }
 
 def get_com_args():
@@ -61,25 +47,29 @@ def get_com_args():
                         help="Ratio min ratio max (default 0.5 1.5)")
     parser.add_argument("--no_ratio", action="store_true",
                         help="Do not add ratio comparison")
+
     return parser.parse_args()
 
 def makePlot(histName, info, basePath, infileName, channels):
     print("Processing {}".format(histName))
     isDcrt = info.isDiscreteGraph(histName)
-    inFile = uproot.open(infileName)
+
     for chan in channels:
-        signal = pyHist(info.getLegendName(signalName), color_by_group[signalName], isDcrt)
+        signals = {sig: pyHist(info.getLegendName(sig), color_by_group[sig], isDcrt)
+                  for sig in signalNames}
         ratio = pyHist("Ratio", "black", isDcrt)
-        error = pyHist("Stat Errors", "plum", isDcrt)
         band = pyHist("Ratio", "plum", isDcrt)
+
+        error = pyHist("Stat Errors", "plum", isDcrt)
         data = pyHist("Data", 'black', isDcrt)
 
         #### FIX
-        groupHists = config.getNormedHistos(inFile, info, histName, chan)
-        exclude = [signalName, 'data']
+        groupHists = config.getNormedHistos(infileName, info, histName, chan)
+        exclude = ['data', *signalNames]
 
-        if signalName in groupHists:
-            signal.copy_into(groupHists[signalName])
+        for sig in signalNames:
+            if sig in groupHists:
+                signals[sig].copy_into(groupHists[sig])
         # data
         if False:
             data.copy_into(groupHists['data']) 
@@ -89,15 +79,16 @@ def makePlot(histName, info, basePath, infileName, channels):
         stacker.setColors(color_by_group)
         stacker.setLegendNames(info)
         error.copy_into(stacker.getHist())
-        if not signal.empty():
-            scale = config.findScale(np.sum(stacker.stack) / signal.integral())
-            signal.scaleHist(scale)
+        for sig, signal in signals.items():
+            if not signal.empty():
+                scale = config.findScale(np.sum(stacker.stack) / signal.integral())
+                signals[sig].scaleHist(scale)
 
-        # ratio
-        if not signal.empty():
-            ratio.copy_into(signal.copy().divide(stacker.getHist()))
-            ratio.scaleHist(signal.draw_sc)
-            band.copy_into(stacker.getHist().copy().divide(stacker.getHist()))
+        # # ratio
+        # if not signal.empty():
+        #     ratio.copy_into(signal.copy().divide(stacker.getHist()))
+        #     ratio.scaleHist(signal.draw_sc)
+        #     band.copy_into(stacker.getHist().copy().divide(stacker.getHist()))
 
         # Extra options
         stacker.setDrawType(args.drawStyle)
@@ -107,9 +98,10 @@ def makePlot(histName, info, basePath, infileName, channels):
         n, bins, patches = pad().hist(**stacker.getInputs())
         stacker.applyPatches(plt, patches)
 
-        if not signal.empty():
-            pad().hist(**signal.getInputsHist())
-            pad().errorbar(**signal.getInputs())
+        for sig, signal in signals.items():
+            if not signal.empty():
+                pad().hist(**signal.getInputsHist())
+                pad().errorbar(**signal.getInputs())
         if not data.empty():
             pad().errorbar(**data.getInputs())
         if not error.empty():
@@ -120,8 +112,8 @@ def makePlot(histName, info, basePath, infileName, channels):
 
         pad.setLegend(info.getPlotSpec(histName))
         pad.axisSetup(info.getPlotSpec(histName), stacker.getRange())
-        hep.cms.label(ax=pad(), year="")
-        
+        hep.cms.label(ax=pad(), year="Run II", data=not data.empty()) # , lumi=info.getLumi()/1000
+
         fig = plt.gcf()
 
         if chan == "all" or len(channels) == 1:
@@ -129,15 +121,17 @@ def makePlot(histName, info, basePath, infileName, channels):
         baseChan = "{}/{}".format(basePath, chan)
         plotBase = "{}/plots/{}".format(baseChan, histName)
         plt.savefig("{}.png".format(plotBase), format="png", bbox_inches='tight')
-        plt.savefig("{}.pdf".format(plotBase), format="pdf", bbox_inches='tight')
+        subprocess.call('convert {0}.png -quality 0 {0}.pdf'.format(plotBase),
+                        shell=True)
         plt.close()
 
         # setup log file
         logger = LogFile(histName, info, "{}/logs".format(baseChan))
         logger.add_metainfo(callTime, command)
         logger.add_mc(drawOrder)
-        if not signal.empty():
-            logger.add_signal(groupHists[signalName], signalName)
+        for sig, signal in signals.items():
+            if not signal.empty():
+                logger.add_signal(groupHists[sig], sig)
         logger.write_out()
 
 
@@ -153,7 +147,7 @@ if __name__ == "__main__":
     anaSel = args.analysis.split('/')
     if len(anaSel) == 1:
         anaSel.append('')
-
+    
     info = InfoGetter(anaSel[0], anaSel[1], args.infile, args.info)
     if args.drawStyle == "compare":
         info.setLumi(-1)
@@ -164,11 +158,11 @@ if __name__ == "__main__":
     if not color_by_group:
         config.printDrawObjAndExit(info)
 
-    if args.signal and args.signal not in color_by_group:
+    signalNames = args.signal.split(',')
+    if not set(signalNames) & set(color_by_group.keys()):
         print("signal not in list of groups!")
         print(color_by_group.keys())
         exit(1)
-    signalName = args.signal
     channels = args.channels.split(',')
 
     basePath = config.setupPathAndDir(args.analysis, args.drawStyle, args.path,
@@ -202,8 +196,10 @@ if __name__ == "__main__":
     for chan in channels:
         writeHTML("{}/{}".format(basePath, chan), "{}/{}".format(args.analysis, chan))
     userName = os.environ['USER']
-    htmlPath = basePath[basePath.index(userName) + len(userName) + 1:][4:]
+
     if 'hep.wisc.edu' in os.environ['HOSTNAME']:
+        htmlPath = basePath[basePath.index(userName) + len(userName) + 1:][4:]
         print("https://www.hep.wisc.edu/~{0}/{1}".format(userName, htmlPath))
     else:
+        htmlPath = basePath[basePath.index(userName) + len(userName) + 1:][4:]
         print("https://{0}.web.cern.ch/{0}/{1}".format(userName, htmlPath))
