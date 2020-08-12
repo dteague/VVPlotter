@@ -2,7 +2,8 @@ import argparse
 import os
 import time
 from histograms.pyUproot import GenericHist
-
+import uproot
+import pandas
 
 def get_generic_args():
     parser = argparse.ArgumentParser()
@@ -25,34 +26,35 @@ def get_generic_args():
     return parser
 
 
-def getNormedHistos(inFile, info, histName, chan):
+def getNormedHistos(infilename, info, histName, chan):
     groupHists = dict()
     oldRebin = None
     fullHistName = "{}_{}".format(histName, chan)
-    for sample in inFile.keys():
-        if fullHistName not in inFile[sample]: continue
-        rootHist = inFile[sample][fullHistName]
-        sample = sample.decode()
-        sample = sample[:-2] if sample[-2:] == ";1" else sample
-        scale = info.getXSec(sample) / info.getSumweight(sample)
+    with uproot.open(infilename) as inFile:
+        for sample in inFile.keys():
+            if fullHistName not in inFile[sample]: continue
+            rootHist = inFile[sample][fullHistName]
+            sample = sample.decode()
+            sample = sample[:-2] if sample[-2:] == ";1" else sample
+            scale = info.getXSec(sample) / info.getSumweight(sample)
 
-        hist = GenericHist.fromUproot(rootHist)
-        if hist.empty():
-            continue
-        hist.scale(scale)
-        
-        if "setXaxis" in info.getPlotSpec(histName):
-            hist.changeAxis(info.getPlotSpec(histName)["setXaxis"])
-        if "Rebin" in info.getPlotSpec(histName):
-            oldRebin, newRebin = hist.rebin(info.getPlotSpec(histName)["Rebin"])
-        
-        hist.addOverflow()
-        
-        for group in info.getGroupName(sample):
-            if group not in groupHists.keys():
-                groupHists[group] = GenericHist()
-            groupHists[group] += hist
-            groupHists[group].name = group
+            hist = GenericHist.fromUproot(rootHist)
+            if hist.empty():
+                continue
+            hist.scale(scale)
+
+            if "setXaxis" in info.getPlotSpec(histName):
+                hist.changeAxis(info.getPlotSpec(histName)["setXaxis"])
+            if "Rebin" in info.getPlotSpec(histName):
+                oldRebin, newRebin = hist.rebin(info.getPlotSpec(histName)["Rebin"])
+
+            hist.addOverflow()
+
+            for group in info.getGroupName(sample):
+                if group not in groupHists.keys():
+                    groupHists[group] = GenericHist()
+                groupHists[group] += hist
+                groupHists[group].name = group
 
     if oldRebin and oldRebin - newRebin > 5:
         print("Large change in rebin for {}: {} to {}".format(histName, oldRebin, newRebin))
@@ -84,7 +86,6 @@ def getDrawOrder(groupHists, drawObj, info, ex=[]):
 
 
 from math import log10
-
 
 def findScale(s, b):
     scale = 1

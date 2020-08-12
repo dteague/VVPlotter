@@ -93,12 +93,12 @@ def main(args):
     config.checkOrCreateDir(args.outdir)
     outname = "{}/{}_{}_card.txt".format(args.outdir, anaSel[0], fitvar)
     
-    inFile = uproot.open(args.infile)
+    
     outFile = uproot.recreate(outname.replace("card.txt", "hists.root"))
     rates = list()
     
     for chan in channels:
-        groupHists = config.getNormedHistos(inFile, info, fitvar, chan)
+        groupHists = config.getNormedHistos(args.infile, info, fitvar, chan)
         groupHists["ttt"].scale(1)
         data = GenericHist()
         for name, hist in groupHists.items():
@@ -111,7 +111,6 @@ def main(args):
         outFile["{}_{}_{}".format("data", fitvar, chan)] = get_hist(data)
     rates = np.array(rates)
     outFile.close()
-    inFile.close()
     
     write_card(outname, fitvar, rates, syst_list)
 
