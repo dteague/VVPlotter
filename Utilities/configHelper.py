@@ -68,6 +68,16 @@ def getNormedHistos(infilename, info, histName, chan):
 
     return groupHists
 
+def temp(infilename, info, histName, chan):
+    inFile = pd.read_pickle(infilename)
+    for sample in np.unique(inFile.GroupName):
+        scale = info.getXSec(sample) / info.getSumweight(sample)
+        if "setXaxis" in info.getPlotSpec(histName):
+            hist.changeAxis(info.getPlotSpec(histName)["setXaxis"])
+        if "Rebin" in info.getPlotSpec(histName):
+            oldRebin, newRebin = hist.rebin(info.getPlotSpec(histName)["Rebin"])
+        hist = GenericHist()
+
 
 def getDrawOrder(groupHists, drawObj, info, ex=[]):
     """Might rename: sorts histograms based on integral and returns list
