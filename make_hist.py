@@ -111,7 +111,7 @@ def makePlot(histName, info, basePath, infileName, channels):
         if chan == "all" or len(channels) == 1:
             chan = ""
         baseChan = "{}/{}".format(basePath, chan)
-        plotBase = "{}/plots/{}".format(baseChan, histName.split('/')[-1])
+        plotBase = "{}/plots/{}".format(baseChan, histName)
         plt.savefig("{}.png".format(plotBase), format="png", bbox_inches='tight')
         subprocess.call('convert {0}.png -quality 0 {0}.pdf'.format(plotBase),
                         shell=True)

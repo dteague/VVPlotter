@@ -17,7 +17,7 @@ class Histogram:
             self.hist += right.hist
             self.sumw2 += right.sumw2
         elif isinstance(right, ak.Array):
-            histName = right.columns[0]
+            histName = (set(right.columns) - {"scale_factor"}).pop()
             self.hist.fill(right[histName], weight=right.scale_factor)
             self.sumw2.fill(right[histName], weight=right.scale_factor**2)
         return self
@@ -56,6 +56,7 @@ class Histogram:
     def scale(self, scale, forPlot=False):
         if forPlot:
             self.draw_sc *= scale
+            self.name = self.name.split(" x")[0] + " x {}".format(int(self.draw_sc))
         else:
             self.hist *= scale
             self.sumw2 *= scale**2

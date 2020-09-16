@@ -68,6 +68,16 @@ class InfoGetter:
     def get_color(self, group):
         return self.group2color[group]
 
+    def get_mod(self, histname):
+        if "Modify" in self.plotSpecs[histname]:
+            return self.plotSpecs[histname]["Modify"]
+        else:
+            return ""
+
+    def get_column(self, histname):
+        return self.plotSpecs[histname]["Column"]
+
+
     def setupGraphSpecs(self, input):
         return_map = dict()
         for action, dic in input.items():
@@ -99,12 +109,6 @@ class InfoGetter:
     def getPlotSpec(self, histName):
         return self.plotSpecs[histName]
 
-    def getUpBinUser(self, histName):
-        if "set_xlim" in self.plotSpecs[histName]:
-            return self.plotSpecs[histName]["set_xlim"][1]
-        else:
-            return None
-        
     def isDiscreteGraph(self, histName):
         if "isMultiplicity" in self.plotSpecs[histName]:
             return self.plotSpecs[histName]["isMultiplicity"]

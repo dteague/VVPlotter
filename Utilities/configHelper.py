@@ -28,17 +28,18 @@ def get_generic_args():
 
 def getNormedHistos(indir, info, histName, chan):
     groupHists = dict()
-    columns = [histName, "scale_factor"]
-    groupHists = dict()
+    ak_col = info.get_column(histName)
     for group, members in info.group2MemberMap.items():
         groupHists[group] = Histogram(info.getLegendName(group),
                                       info.get_color(group),
                                       info.get_binning(histName))
         for mem in members:
             array = ak.from_parquet("{}/{}_cut.parquet".format(indir, mem),
-                                    columns)
+                                    [ak_col, "scale_factor"])
+            if info.get_mod(histName):
+                array[ak_col] = eval(info.get_mod(histName).format("array[ak_col]"))
             groupHists[group] += array
-            
+
     for name, hist in groupHists.items():
         if info.getLumi() < 0:
             scale = 1 / sum(hist.hist)
