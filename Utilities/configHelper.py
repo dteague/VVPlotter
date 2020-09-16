@@ -1,9 +1,9 @@
 import argparse
 import os
 import time
-from histograms.pyUproot import GenericHist
-import uproot
-import pandas
+import awkward1 as ak
+from histograms import Histogram
+
 
 def get_generic_args():
     parser = argparse.ArgumentParser()
@@ -21,43 +21,23 @@ def get_generic_args():
                         "Set to -1 for unit normalization")
     # parser.add_argument("--autoScale", type=float, default=-1.,
     #                     help="Ignore Max argument and scale max to ratio given")
-    parser.add_argument("--info", type=str, default="plotInfo.py",
+    parser.add_argument("--info", type=str, default="plotInfo_default.py",
                         help="Name of file containing histogram Info")
     return parser
 
 
-def getNormedHistos(infilename, info, histName, chan):
+def getNormedHistos(indir, info, histName, chan):
     groupHists = dict()
-    oldRebin = None
-    fullHistName = "{}_{}".format(histName, chan)
-    with uproot.open(infilename) as inFile:
-        for sample in inFile.keys():
-            if fullHistName not in inFile[sample]: continue
-            rootHist = inFile[sample][fullHistName]
-            sample = sample.decode()
-            sample = sample[:-2] if sample[-2:] == ";1" else sample
-            scale = info.getXSec(sample) / info.getSumweight(sample)
-
-            hist = GenericHist.fromUproot(rootHist)
-            if hist.empty():
-                continue
-            hist.scale(scale)
-
-            if "setXaxis" in info.getPlotSpec(histName):
-                hist.changeAxis(info.getPlotSpec(histName)["setXaxis"])
-            if "Rebin" in info.getPlotSpec(histName):
-                oldRebin, newRebin = hist.rebin(info.getPlotSpec(histName)["Rebin"])
-
-            hist.addOverflow()
-
-            for group in info.getGroupName(sample):
-                if group not in groupHists.keys():
-                    groupHists[group] = GenericHist()
-                groupHists[group] += hist
-                groupHists[group].name = group
-
-    if oldRebin and oldRebin - newRebin > 5:
-        print("Large change in rebin for {}: {} to {}".format(histName, oldRebin, newRebin))
+    columns = [histName, "scale_factor"]
+    groupHists = dict()
+    for group, members in info.group2MemberMap.items():
+        groupHists[group] = Histogram(info.getLegendName(group),
+                                      info.get_color(group),
+                                      info.get_binning(histName))
+        for mem in members:
+            array = ak.from_parquet("{}/{}_cut.parquet".format(indir, mem),
+                                    columns)
+            groupHists[group] += array
             
     for name, hist in groupHists.items():
         if info.getLumi() < 0:
@@ -67,32 +47,6 @@ def getNormedHistos(infilename, info, histName, chan):
             hist.scale(info.getLumi())
 
     return groupHists
-
-def temp(infilename, info, histName, chan):
-    inFile = pd.read_pickle(infilename)
-    for sample in np.unique(inFile.GroupName):
-        scale = info.getXSec(sample) / info.getSumweight(sample)
-        if "setXaxis" in info.getPlotSpec(histName):
-            hist.changeAxis(info.getPlotSpec(histName)["setXaxis"])
-        if "Rebin" in info.getPlotSpec(histName):
-            oldRebin, newRebin = hist.rebin(info.getPlotSpec(histName)["Rebin"])
-        hist = GenericHist()
-
-
-def getDrawOrder(groupHists, drawObj, info, ex=[]):
-    """Might rename: sorts histograms based on integral and returns list
-       of pairs with the first the group name and the second the root hist"""
-    drawTmp = list()
-    for key in drawObj:
-        if key in ex: continue
-        try:
-            drawTmp.append((sum(groupHists[key].hist), key))
-        except:
-            print("Missing the histograms for the group %s" % key)
-            exit(0)
-
-    drawTmp.sort()
-    return [(i[1], groupHists[i[1]]) for i in drawTmp]
 
 
 from math import log10

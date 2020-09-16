@@ -1,11 +1,11 @@
+import boost_histogram as bh
 import os
 import json
 import imp
 import glob
-import uproot
 
 class InfoGetter:
-    def __init__(self, analysis, selection, infilename, plotInfo="plotInfo.py"):
+    def __init__(self, analysis, selection, group2color, plotInfo="plotInfo_default.py"):
         try:
             adm_path = os.environ['ADM_PATH']
         except:
@@ -13,24 +13,17 @@ class InfoGetter:
             print('Please set this path and consider setting it in your .bashrc')
             exit(1)
         #adm_path = '
-
-        inFile = uproot.open(infilename)
+        
         self.analysis = analysis
         self.selection = selection
         self.groupInfo = self.readAllInfo("{}/PlotGroups/{}.py"
                                           .format(adm_path, analysis))
-        self.mcInfo = self.readAllInfo(
-            "{}/FileInfo/montecarlo/montecarlo_2016.py".format(adm_path))
-        self.member2GroupMap = self.setupMember2GroupMap()
-        self.listOfHists = self.setupListOfHists(inFile)
-        self.sumweights = self.setupSumWeight(inFile)
+        self.group2MemberMap = {group: self.groupInfo[group]["Members"]
+                                for group in group2color.keys()}
+        self.group2color = group2color
         self.plotSpecs = self.readAllInfo(plotInfo)
         self.lumi = 35900  #default
         
-        # if os.path.isfile("%s/PlotObjects/%s/%s.json" % (adm_path, analysis, selection)):
-        #     self.objectInfo = self.readAllInfo("%s/PlotObjects/%s/%s.json" % (adm_path, analysis, selection))
-        # else:
-        #     self.objectInfo = self.readAllInfo("%s/PlotObjects/%s.json" % (adm_path, analysis))
     def readAllInfo(self, file_path):
         info = {}
         for info_file in glob.glob(file_path):
@@ -65,14 +58,15 @@ class InfoGetter:
                 print(err)
         return json_info
 
-    def setupMember2GroupMap(self):
-        return_map = dict()
-        for key, val in self.groupInfo.items():
-            for bkg in val['Members']:
-                if bkg not in return_map:
-                    return_map[bkg] = list()
-                return_map[bkg].append(key)
-        return return_map
+    def get_hists(self):
+        return self.plotSpecs.keys()
+
+    def get_binning(self, histname):
+        return bh.axis.Regular(self.plotSpecs[histname]["Binning"],
+           *self.plotSpecs[histname]["set_xlim"])
+
+    def get_color(self, group):
+        return self.group2color[group]
 
     def setupGraphSpecs(self, input):
         return_map = dict()
@@ -82,46 +76,11 @@ class InfoGetter:
                     return_map[hist] = dict()
                 return_map[hist][action] = value
         return return_map
-
-    def setupListOfHists(self, inFile):
-        return_list = []
-        for histName in inFile[inFile.keys()[0]].keys():
-            histName = histName.decode()
-            if histName == 'sumweights':
-                continue
-            baseName = histName[:histName.rfind('_')]
-            if baseName not in return_list:
-                return_list.append(baseName)
-        return return_list
-
-    def setupSumWeight(self, inFile):
-        return_dict = dict()
-        for dirName, dir in inFile.items():
-            if "sumweights" not in dir:
-                print("sumweight not in {}".format(dir))
-            dirName = dirName.decode().strip(";1")
-            return_dict[dirName] = sum(dir['sumweights'].values)
-        return return_dict
-
+    
     def setDrawStyle(self, drawStyle):
         if drawStyle == "compare":
             self.lumi = -1
             
-    def getListOfHists(self):
-        return self.listOfHists
-
-    def getGroupName(self, member):
-        return self.member2GroupMap[member]
-
-    def getXSec(self, member):
-        return self.mcInfo[member]['cross_section']
-
-    def getSumweight(self, member):
-        return self.sumweights[member]
-
-    def getStyle(self, group):
-        return self.groupInfo[group]['Style']
-
     def getLumi(self):
         return self.lumi
 
@@ -145,10 +104,7 @@ class InfoGetter:
             return self.plotSpecs[histName]["set_xlim"][1]
         else:
             return None
-
-    def isInPlotSpec(self, histName):
-        return histName in self.plotSpecs
-
+        
     def isDiscreteGraph(self, histName):
         if "isMultiplicity" in self.plotSpecs[histName]:
             return self.plotSpecs[histName]["isMultiplicity"]

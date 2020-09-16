@@ -12,7 +12,7 @@ import multiprocessing as mp
 import logging
 
 from Utilities.InfoGetter import InfoGetter
-from histograms import *
+from histograms import Histogram, Stack, pyPad
 from Utilities.LogFile import LogFile
 from Utilities.makeSimpleHtml import writeHTML
 import Utilities.configHelper as config
@@ -24,12 +24,12 @@ color_by_group = {
     "ttt": "crimson",
     "ttz": "mediumseagreen",
     "ttw": "darkgreen",
-    "rare_no3top": "darkorange",
-    "ttXY": "cornflowerblue",
-    "xg": "indigo",
     "tth": "slategray",
-    "other": "blue",
-    "tttt_201X": "darkmagenta",
+    # "rare_no3top": "darkorange",
+    # "ttXY": "cornflowerblue",
+    # "xg": "indigo",
+    # "other": "blue",
+    # "tttt_201X": "darkmagenta",
 }
 
 def get_com_args():
@@ -52,87 +52,79 @@ def get_com_args():
 
 def makePlot(histName, info, basePath, infileName, channels):
     print("Processing {}".format(histName))
+    binning = info.get_binning(histName)
     isDcrt = info.isDiscreteGraph(histName)
 
     for chan in channels:
-        signals = {sig: pyHist(info.getLegendName(sig), color_by_group[sig], isDcrt)
-                  for sig in signalNames}
-        ratio = pyHist("Ratio", "black", isDcrt)
-        band = pyHist("Ratio", "plum", isDcrt)
-
-        error = pyHist("Stat Errors", "plum", isDcrt)
-        data = pyHist("Data", 'black', isDcrt)
-
-        #### FIX
+        ratio = Histogram("Ratio", "black", binning)
+        band = Histogram("Ratio", "plum", binning)
+        error = Histogram("Stat Errors", "plum", binning)
+        stacker = Stack(binning)
+        
         groupHists = config.getNormedHistos(infileName, info, histName, chan)
-        exclude = ['data', *signalNames]
+        exclude = ['data'] + signalNames
+        signal = groupHists[signalNames[0]] if signalNames[0] in groupHists else None
+        # signals = {sig: groupHists[sig] for sig in (sig for sig in signalNames
+        #                                          if sig in groupHists)}
+        data = groupHists['data'] if 'data' in groupHists else None
+        for group in (g for g in groupHists.keys() if g not in exclude):
+            stacker += groupHists[group]
+        error += stacker
+        # for sig, signal in signals.items():
+        if signal:
+            scale = config.findScale(stacker.integral() / signal.integral())
+            signal.scale(scale, forPlot=True)
 
-        for sig in signalNames:
-            if sig in groupHists:
-                signals[sig].copy_into(groupHists[sig])
-        # data
-        if False:
-            data.copy_into(groupHists['data']) 
-            
-        drawOrder = config.getDrawOrder(groupHists, color_by_group, info, ex=exclude)
-        stacker = pyStack(drawOrder, isMult=isDcrt)
-        stacker.setColors(color_by_group)
-        stacker.setLegendNames(info)
-        error.copy_into(stacker.getHist())
-        for sig, signal in signals.items():
-            if not signal.empty():
-                scale = config.findScale(np.sum(stacker.stack) / signal.integral())
-                signals[sig].scaleHist(scale)
 
-        # # ratio
-        # if not signal.empty():
-        #     ratio.copy_into(signal.copy().divide(stacker.getHist()))
-        #     ratio.scaleHist(signal.draw_sc)
-        #     band.copy_into(stacker.getHist().copy().divide(stacker.getHist()))
 
-        # Extra options
-        stacker.setDrawType(args.drawStyle)
+        # ratio
+        if signal:
+            ratio += signal / stacker
+            ratio.scale(signal.draw_sc, forPlot=True)
+            band += stacker/stacker
 
-        pad = pyPad(plt, not ratio.empty())
-
+        # # Extra options
+        # stacker.setDrawType(args.drawStyle)
+        
+        pad = pyPad(plt, ratio)
         n, bins, patches = pad().hist(**stacker.getInputs())
         stacker.applyPatches(plt, patches)
 
-        for sig, signal in signals.items():
-            if not signal.empty():
-                pad().hist(**signal.getInputsHist())
-                pad().errorbar(**signal.getInputs())
-        if not data.empty():
+        # for signal in (s for s in signals.values() if s):
+        if signal:
+            pad().hist(**signal.getInputsHist())
+            pad().errorbar(**signal.getInputs())
+        if data:
             pad().errorbar(**data.getInputs())
-        if not error.empty():
+        if error:
             pad().hist(**error.getInputsError())
-        if not ratio.empty():
+        if ratio:
             pad(sub_pad=True).errorbar(**ratio.getInputs())
             pad(sub_pad=True).hist(**band.getInputsError())
 
         pad.setLegend(info.getPlotSpec(histName))
-        pad.axisSetup(info.getPlotSpec(histName), stacker.getRange())
-        hep.cms.label(ax=pad(), year="Run II", data=not data.empty()) # , lumi=info.getLumi()/1000
+        pad.axisSetup(info.getPlotSpec(histName))
+        hep.cms.label(ax=pad(), year="Run II", data=data) # , lumi=info.getLumi()/1000
 
         fig = plt.gcf()
 
         if chan == "all" or len(channels) == 1:
             chan = ""
         baseChan = "{}/{}".format(basePath, chan)
-        plotBase = "{}/plots/{}".format(baseChan, histName)
+        plotBase = "{}/plots/{}".format(baseChan, histName.split('/')[-1])
         plt.savefig("{}.png".format(plotBase), format="png", bbox_inches='tight')
         subprocess.call('convert {0}.png -quality 0 {0}.pdf'.format(plotBase),
                         shell=True)
         plt.close()
 
         # setup log file
-        logger = LogFile(histName, info, "{}/logs".format(baseChan))
-        logger.add_metainfo(callTime, command)
-        logger.add_mc(drawOrder)
-        for sig, signal in signals.items():
-            if not signal.empty():
-                logger.add_signal(groupHists[sig], sig)
-        logger.write_out()
+        # logger = LogFile(histName, info, "{}/logs".format(baseChan))
+        # logger.add_metainfo(callTime, command)
+        # logger.add_mc(drawOrder)
+        # for sig, signal in signals.items():
+        #     if not signal.empty():
+        #         logger.add_signal(groupHists[sig], sig)
+        # logger.write_out()
 
 
 def makePlotStar(args):
@@ -147,33 +139,30 @@ if __name__ == "__main__":
     anaSel = args.analysis.split('/')
     if len(anaSel) == 1:
         anaSel.append('')
-    
-    info = InfoGetter(anaSel[0], anaSel[1], args.infile, args.info)
+
+    if not color_by_group:
+        config.printDrawObjAndExit(info)
+    signalNames = args.signal.split(',')
+    if not set(signalNames) & set(color_by_group.keys()):
+        print("signal not in list of groups!")
+        print(color_by_group.keys())
+        exit(1)
+
+    info = InfoGetter(anaSel[0], anaSel[1], color_by_group, args.info)
     if args.drawStyle == "compare":
         info.setLumi(-1)
     else:
         info.setLumi(args.lumi * 1000)
 
     info.setDrawStyle(args.drawStyle)
-    if not color_by_group:
-        config.printDrawObjAndExit(info)
-
-    signalNames = args.signal.split(',')
-    if not set(signalNames) & set(color_by_group.keys()):
-        print("signal not in list of groups!")
-        print(color_by_group.keys())
-        exit(1)
     channels = args.channels.split(',')
 
     basePath = config.setupPathAndDir(args.analysis, args.drawStyle, args.path,
                                       channels)
 
     argList = list()
-    for histName in info.getListOfHists():
-        if not info.isInPlotSpec(histName):
-            continue
+    for histName in info.get_hists():
         argList.append((histName, info, basePath, args.infile, channels))
-
 
     if args.j > 1:
         pool = mp.Pool(args.j)
@@ -183,7 +172,7 @@ if __name__ == "__main__":
     else:
         for plot in argList:
             makePlotStar(plot)
-
+            
     try:
         channels.remove("all")
     except ValueError:
