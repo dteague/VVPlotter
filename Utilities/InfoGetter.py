@@ -1,4 +1,5 @@
 import boost_histogram as bh
+import numpy as np
 import os
 import json
 import imp
@@ -58,25 +59,20 @@ class InfoGetter:
                 print(err)
         return json_info
 
+    def __getattr__(self, name):
+        return {h: (vals[name] if name in vals else None) for h, vals in self.plotSpecs.items()}
+
     def get_hists(self):
         return self.plotSpecs.keys()
 
     def get_binning(self, histname):
-        return bh.axis.Regular(self.plotSpecs[histname]["Binning"],
-           *self.plotSpecs[histname]["set_xlim"])
+        bins = np.array(self.Binning[histname], dtype=float)
+        if self.Discrete[histname]:
+            bins[1:] = bins[1:] - 0.5
+        return bh.axis.Regular(int(bins[0]), *bins[1:])
 
     def get_color(self, group):
         return self.group2color[group]
-
-    def get_mod(self, histname):
-        if "Modify" in self.plotSpecs[histname]:
-            return self.plotSpecs[histname]["Modify"]
-        else:
-            return ""
-
-    def get_column(self, histname):
-        return self.plotSpecs[histname]["Column"]
-
 
     def setupGraphSpecs(self, input):
         return_map = dict()
@@ -86,22 +82,12 @@ class InfoGetter:
                     return_map[hist] = dict()
                 return_map[hist][action] = value
         return return_map
-    
-    def setDrawStyle(self, drawStyle):
-        if drawStyle == "compare":
-            self.lumi = -1
-            
-    def getLumi(self):
-        return self.lumi
 
     def getLegendName(self, group):
         return self.groupInfo[group]['Name']
 
-    def getSelection(self):
-        return self.selection
-
     def getAnalysis(self):
-        return self.analysis
+        return self.analysis, self.selection
 
     def getGroups(self):
         return self.groupInfo.keys()

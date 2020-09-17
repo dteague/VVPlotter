@@ -36,8 +36,7 @@ class LogFile:
     def __init__(self, name, info, path='.'):
         self.plotTable = PrettyTable(["Plot Group", "Weighted Events", "Error"])
         self.output_name = "{}/{}_info.log".format(path, name)
-        self.analysis = info.getAnalysis()
-        self.selection = info.getSelection()
+        self.analysis, self.selection = info.getAnalysis()
         self.lumi = info.getLumi() / 1000
         self.hists = [np.array([0., 0.]) for i in range(4)] 
         self.callTime = ""

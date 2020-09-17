@@ -1,24 +1,22 @@
 #!/usr/bin/env python
 import os
-import numpy as np
+import sys
+import datetime
+import subprocess
+import multiprocessing as mp
 import matplotlib
 matplotlib.use('Agg')
-import subprocess
 import matplotlib.pyplot as plt
-import mplhep as hep
-import datetime
-import sys
-import multiprocessing as mp
 import logging
+logging.getLogger('matplotlib.font_manager').disabled = True
+import mplhep as hep
+plt.style.use([hep.style.CMS, hep.style.firamath])
 
 from Utilities.InfoGetter import InfoGetter
 from histograms import Histogram, Stack, pyPad
 from Utilities.LogFile import LogFile
 from Utilities.makeSimpleHtml import writeHTML
 import Utilities.configHelper as config
-
-plt.style.use([hep.style.CMS, hep.style.firamath])
-logging.getLogger('matplotlib.font_manager').disabled = True
 
 color_by_group = {
     "ttt": "crimson",
@@ -153,10 +151,8 @@ if __name__ == "__main__":
         info.setLumi(-1)
     else:
         info.setLumi(args.lumi * 1000)
-
-    info.setDrawStyle(args.drawStyle)
+        
     channels = args.channels.split(',')
-
     basePath = config.setupPathAndDir(args.analysis, args.drawStyle, args.path,
                                       channels)
 
@@ -184,11 +180,10 @@ if __name__ == "__main__":
     writeHTML(basePath, args.analysis, channels)
     for chan in channels:
         writeHTML("{}/{}".format(basePath, chan), "{}/{}".format(args.analysis, chan))
-    userName = os.environ['USER']
 
+    userName = os.environ['USER']
+    htmlPath = basePath[basePath.index(userName) + len(userName) + 1:][4:]
     if 'hep.wisc.edu' in os.environ['HOSTNAME']:
-        htmlPath = basePath[basePath.index(userName) + len(userName) + 1:][4:]
         print("https://www.hep.wisc.edu/~{0}/{1}".format(userName, htmlPath))
     else:
-        htmlPath = basePath[basePath.index(userName) + len(userName) + 1:][4:]
         print("https://{0}.web.cern.ch/{0}/{1}".format(userName, htmlPath))
